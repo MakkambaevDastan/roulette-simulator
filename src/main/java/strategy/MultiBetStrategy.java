@@ -1,8 +1,5 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import application.RouletteContext;
 import model.Bet;
 import model.BetTypePrediction;
@@ -10,41 +7,44 @@ import predictor.BasePredictor;
 import predictor.MarkovPredictor2;
 import utils.PredictorHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MultiBetStrategy extends BaseStrategy {
 
-	private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(MarkovPredictor2.class);
+    private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(MarkovPredictor2.class);
 
-	public MultiBetStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public MultiBetStrategy(RouletteContext rouletteContext) {
+        super(rouletteContext);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "複数賭け(予測器を使用)";
-	}
+    @Override
+    public String getStrategyName() {
+        return "複数賭け(予測器を使用)";
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		List<Bet> betList = new ArrayList<>();
+    @Override
+    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
+        List<Bet> betList = new ArrayList<>();
 
-		long limit = currentBalance / 10;
-		if (limit < 0) {
-			limit = rouletteContext.initialBalance / 10;
-		}
-		if (rouletteContext.maximumBet < limit) {
-			limit = rouletteContext.maximumBet;
-		}
+        long limit = currentBalance / 10;
+        if (limit < 0) {
+            limit = rouletteContext.initialBalance / 10;
+        }
+        if (rouletteContext.maximumBet < limit) {
+            limit = rouletteContext.maximumBet;
+        }
 
-		for (BetTypePrediction betTypePrediction : PREDICTOR.getNextBetTypePredictionList(rouletteContext)) {
-			if (0.3 < betTypePrediction.probability) {
-				long betValue = (long) (limit * betTypePrediction.probability);
-				if (rouletteContext.minimumBet < betValue) {
-					betList.add(new Bet(betTypePrediction.betType, betValue));
-				} else {
-					betList.add(new Bet(betTypePrediction.betType, rouletteContext.minimumBet));
-				}
-			}
-		}
-		return betList;
-	}
+        for (BetTypePrediction betTypePrediction : PREDICTOR.getNextBetTypePredictionList(rouletteContext)) {
+            if (0.3 < betTypePrediction.probability) {
+                long betValue = (long) (limit * betTypePrediction.probability);
+                if (rouletteContext.minimumBet < betValue) {
+                    betList.add(new Bet(betTypePrediction.betType, betValue));
+                } else {
+                    betList.add(new Bet(betTypePrediction.betType, rouletteContext.minimumBet));
+                }
+            }
+        }
+        return betList;
+    }
 }

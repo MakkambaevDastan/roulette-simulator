@@ -4,12 +4,12 @@ import enums.BetType;
 
 public class Bet {
 
-	public BetType betType;
+    public BetType betType;
 
-	public long value;
+    public long value;
 
-	public Bet(BetType betType, long value) {
-		this.betType = betType;
-		this.value = value;
-	}
+    public Bet(BetType betType, long value) {
+        this.betType = betType;
+        this.value = value;
+    }
 }

@@ -5,7 +5,8 @@ import java.util.List;
 
 public enum BetType {
     TOP_LINE_OR_BASKET,
-    ZERO, DOUBLE_ZERO,
+    ZERO,
+    DOUBLE_ZERO,
     STRAIGHT_UP_1,
     STRAIGHT_UP_2,
     STRAIGHT_UP_3,
