@@ -7,19 +7,8 @@ import application.RouletteContext;
 import enums.BetType;
 import model.Bet;
 
-/**
- * 7回目の法則(赤のみ).<br>
- * http://www.xn--9ckk7he3f9633bhel9uq.jp/seventh_time-law.html
- *
- * @author cyrus
- */
 public class SevenKaimeStrategy extends BaseStrategy {
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public SevenKaimeStrategy(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -34,7 +23,6 @@ public class SevenKaimeStrategy extends BaseStrategy {
 		List<Bet> betList = new ArrayList<>();
 		if (7 <= rouletteContext.spotHistoryList.size()) {
 
-			// 7回連続で黒であるかを判定
 			boolean notMatched = false;
 			for (int i = 0; i < 7; i++) {
 				if (!rouletteContext.spotHistoryList.get(rouletteContext.spotHistoryList.size() - (1 + i)).isBlack()) {
@@ -42,7 +30,6 @@ public class SevenKaimeStrategy extends BaseStrategy {
 				}
 			}
 
-			// 7回連続で黒の場合
 			if (!notMatched) {
 				betList.add(new Bet(BetType.RED, rouletteContext.minimumBet));
 			}

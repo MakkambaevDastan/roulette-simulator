@@ -7,19 +7,8 @@ import enums.BetType;
 import enums.Spot;
 import model.Bet;
 
-/**
- * ベットヘルパー.
- *
- * @author cyrus
- */
 public class BetHelper {
 
-	/**
-	 * ベット総額を取得.
-	 *
-	 * @param betList
-	 * @return
-	 */
 	public static long getTotalBetValue(List<Bet> betList) {
 		long totalValue = 0;
 		if (betList != null) {
@@ -30,13 +19,6 @@ public class BetHelper {
 		return totalValue;
 	}
 
-	/**
-	 * 配当額を取得.
-	 *
-	 * @param betList
-	 * @param spot
-	 * @return
-	 */
 	public static long getTotalPayout(List<Bet> betList, Spot spot) {
 		long totalValue = 0;
 		if (betList != null) {
@@ -49,13 +31,6 @@ public class BetHelper {
 		return totalValue;
 	}
 
-	/**
-	 * ベット一覧に当選が含まれているかどうかを取得.
-	 *
-	 * @param betList
-	 * @param spot
-	 * @return
-	 */
 	public static boolean hasWin(List<Bet> betList, Spot spot) {
 		if (betList != null) {
 			for (Bet bet : betList) {
@@ -67,24 +42,10 @@ public class BetHelper {
 		return false;
 	}
 
-	/**
-	 * ベットが当選かどうかを取得.
-	 *
-	 * @param bet
-	 * @param spot
-	 * @return
-	 */
 	public static boolean isWin(Bet bet, Spot spot) {
 		return isWin(bet.betType, spot);
 	}
 
-	/**
-	 * ベットが当選かどうかを取得.
-	 *
-	 * @param betType
-	 * @param spot
-	 * @return
-	 */
 	public static boolean isWin(BetType betType, Spot spot) {
 		switch (betType) {
 		case BLACK:
@@ -426,12 +387,6 @@ public class BetHelper {
 		}
 	}
 
-	/**
-	 * 出目に一致する1点賭けのベットの種類を取得.
-	 *
-	 * @param spot
-	 * @return
-	 */
 	public static BetType getStraightUpBetType(Spot spot) {
 		switch (spot) {
 		case SPOT_0:
@@ -515,12 +470,6 @@ public class BetHelper {
 		}
 	}
 
-	/**
-	 * 出目に一致するフラワーベットのベットの種類を取得.
-	 *
-	 * @param spot
-	 * @return
-	 */
 	public static List<BetType> getFlowerBetBetTypeList(Spot spot) {
 		List<BetType> betTypeList = new ArrayList<>();
 		for (BetType betType : new BetType[] { BetType.STRAIGHT_UP_1, BetType.STRAIGHT_UP_2, BetType.STRAIGHT_UP_3,

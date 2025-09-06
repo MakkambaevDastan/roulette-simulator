@@ -13,23 +13,10 @@ import predictor.MarkovPredictor2;
 import utils.BetHelper;
 import utils.PredictorHelper;
 
-/**
- * ネイバーベット法(予測器を使用).
- *
- * @author cyrus
- */
 public class NeighborStrategy extends BaseStrategy {
 
-	/**
-	 * 使用する予測器.
-	 */
 	private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(MarkovPredictor2.class);
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public NeighborStrategy(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -43,18 +30,15 @@ public class NeighborStrategy extends BaseStrategy {
 	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
 		List<Bet> betList = new ArrayList<>();
 
-		// ヨーロピアンの場合のみ実行
 		if (rouletteContext.rouletteType != RouletteType.EUROPEAN_STYLE) {
 			return betList;
 		}
 
-		// エリア毎の確率
 		double probability1 = 0;
 		double probability2 = 0;
 		double probability3 = 0;
 		double probability4 = 0;
 
-		// 予測一覧に対して実行
 		for (SpotPrediction spotPrediction : PREDICTOR.getNextSpotPredictionList(rouletteContext)) {
 			switch (spotPrediction.spot) {
 				case SPOT_32:
@@ -107,11 +91,9 @@ public class NeighborStrategy extends BaseStrategy {
 			}
 		}
 
-		// 確率の最大値を取得
 		double maximumProbability = Math.max(probability1,
 				Math.max(probability2, Math.max(probability3, probability4)));
 
-		// ベットを作成
 		if (maximumProbability == probability1) {
 			for (Spot spot : new Spot[] { Spot.SPOT_32, Spot.SPOT_15, Spot.SPOT_19, Spot.SPOT_04, Spot.SPOT_21,
 					Spot.SPOT_02, Spot.SPOT_25, Spot.SPOT_17, Spot.SPOT_34 }) {

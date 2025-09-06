@@ -7,29 +7,12 @@ import application.RouletteContext;
 import enums.BetType;
 import model.Bet;
 
-/**
- * バーネット法(赤のみ).<br>
- * http://www.silversandscasino.jp/strategy/barnet.php
- *
- * @author cyrus
- */
 public class BarnetStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
 	private static final BetType USE_BET_TYPE = BetType.RED;
 
-	/**
-	 * セット内の試行回数.
-	 */
 	private int setCount;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public BarnetStrategy(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -41,12 +24,11 @@ public class BarnetStrategy extends BaseStrategy {
 
 	@Override
 	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 負けた場合は試行回数をリセット
+
 		if (!wasLastBetWon(rouletteContext)) {
 			setCount = 0;
 		}
 
-		// 試行回数を加算
 		setCount++;
 
 		switch ((setCount - 1) % 4) {

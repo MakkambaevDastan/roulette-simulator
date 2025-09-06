@@ -13,23 +13,10 @@ import predictor.RnnPredictor;
 import utils.BetHelper;
 import utils.PredictorHelper;
 
-/**
- * 1点賭け(予測器を使用).
- *
- * @author cyrus
- */
 public class StraightUpStrategy extends BaseStrategy {
 
-	/**
-	 * 使用する予測器.
-	 */
 	private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(RnnPredictor.class);
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public StraightUpStrategy(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -43,10 +30,8 @@ public class StraightUpStrategy extends BaseStrategy {
 	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
 		List<Bet> betList = new ArrayList<>();
 
-		// 最も確率の高い出目を取得
 		double maxProbability = 0;
 		Spot spot = null;
-		// 予測一覧に対して実行
 		for (SpotPrediction spotPrediction : PREDICTOR.getNextSpotPredictionList(rouletteContext)) {
 			if (maxProbability < spotPrediction.probability) {
 				maxProbability = spotPrediction.probability;
@@ -55,10 +40,8 @@ public class StraightUpStrategy extends BaseStrategy {
 		}
 
 		if (spot != null) {
-			// 使用するベットの種類を選択
 			BetType useBetType = BetHelper.getStraightUpBetType(spot);
 
-			// 最小ベット額をベット
 			betList.add(new Bet(useBetType, rouletteContext.minimumBet));
 		}
 		return betList;

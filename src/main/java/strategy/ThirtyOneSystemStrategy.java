@@ -7,34 +7,14 @@ import application.RouletteContext;
 import enums.BetType;
 import model.Bet;
 
-/**
- * 31システム(赤のみ).<br>
- * http://www.silversandscasino.jp/strategy/31system.php
- *
- * @author cyrus
- */
 public class ThirtyOneSystemStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
 	private static final BetType USE_BET_TYPE = BetType.RED;
 
-	/**
-	 * 2回前のベットで当選したかどうか.
-	 */
 	private boolean wonSecondFromLastBet;
 
-	/**
-	 * セット内の試行回数.
-	 */
 	private int setCount;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public ThirtyOneSystemStrategy(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -46,14 +26,12 @@ public class ThirtyOneSystemStrategy extends BaseStrategy {
 
 	@Override
 	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 2連勝した場合、または8回目の試行で負けた場合は試行回数をリセット
 		boolean wasLastBetWon = wasLastBetWon(rouletteContext);
 		if ((wonSecondFromLastBet && wasLastBetWon) || ((setCount - 1) % 9 == 7 && !wasLastBetWon)) {
 			setCount = 0;
 		}
 		wonSecondFromLastBet = wasLastBetWon;
 
-		// 試行回数を加算
 		setCount++;
 
 		switch ((setCount - 1) % 9) {

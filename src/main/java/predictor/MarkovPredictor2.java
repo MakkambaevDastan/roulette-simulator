@@ -12,11 +12,6 @@ import model.BetTypePrediction;
 import model.SpotPrediction;
 import utils.BetHelper;
 
-/**
- * マルコフテーブルによる予測器(出目の履歴内のみ).
- *
- * @author cyrus
- */
 public class MarkovPredictor2 extends BasePredictor {
 
 	@Override
@@ -26,11 +21,9 @@ public class MarkovPredictor2 extends BasePredictor {
 			Map<Spot, Map<Spot, Long>> spotMarkovMap = new HashMap<>();
 
 			for (int i = 0; i < rouletteContext.spotHistoryList.size() - 1; i++) {
-				// 直近2回の出目を取得
 				Spot spot1 = rouletteContext.spotHistoryList.get(i);
 				Spot spot2 = rouletteContext.spotHistoryList.get(i + 1);
 
-				// 出目毎の出現回数を更新
 				if (spotMarkovMap.containsKey(spot1)) {
 					if (spotMarkovMap.get(spot1).containsKey(spot2)) {
 						spotMarkovMap.get(spot1).put(spot2, spotMarkovMap.get(spot1).get(spot2) + 1L);
@@ -44,7 +37,6 @@ public class MarkovPredictor2 extends BasePredictor {
 				}
 			}
 
-			// 出目毎の確率を作成
 			for (Spot nextSpot : Spot.getAvailableList(rouletteContext.rouletteType)) {
 				if (spotMarkovMap.containsKey(rouletteContext.getLastSpot())
 						&& spotMarkovMap.get(rouletteContext.getLastSpot()).containsKey(nextSpot)) {
@@ -64,11 +56,9 @@ public class MarkovPredictor2 extends BasePredictor {
 			Map<BetType, Map<BetType, Long>> betTypeMarkovMap = new HashMap<>();
 
 			for (int i = 0; i < rouletteContext.spotHistoryList.size() - 1; i++) {
-				// 直近2回の出目を取得
 				Spot spot1 = rouletteContext.spotHistoryList.get(i);
 				Spot spot2 = rouletteContext.spotHistoryList.get(i + 1);
 
-				// 当選となるベットの種類一覧を取得
 				List<BetType> betTypeList1 = new ArrayList<>();
 				List<BetType> betTypeList2 = new ArrayList<>();
 				for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
@@ -80,7 +70,6 @@ public class MarkovPredictor2 extends BasePredictor {
 					}
 				}
 
-				// ベットの種類毎の出現回数を更新
 				for (BetType betType1 : betTypeList1) {
 					for (BetType betType2 : betTypeList2) {
 						if (betTypeMarkovMap.containsKey(betType1)) {
@@ -99,7 +88,6 @@ public class MarkovPredictor2 extends BasePredictor {
 				}
 			}
 
-			// 当選となるベットの種類一覧を取得
 			List<BetType> lastSpotBetTypeList = new ArrayList<>();
 			for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
 				if (BetHelper.isWin(betType, rouletteContext.getLastSpot())) {
@@ -107,7 +95,6 @@ public class MarkovPredictor2 extends BasePredictor {
 				}
 			}
 
-			// ベットの種類毎の確率を作成
 			for (BetType lastSpotBetType : lastSpotBetTypeList) {
 				for (BetType nextBetType : BetType.getAvailableList(rouletteContext.rouletteType)) {
 					if (betTypeMarkovMap.containsKey(lastSpotBetType)

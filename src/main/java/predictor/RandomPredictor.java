@@ -10,11 +10,6 @@ import enums.Spot;
 import model.BetTypePrediction;
 import model.SpotPrediction;
 
-/**
- * ランダム予測器.
- *
- * @author cyrus
- */
 public class RandomPredictor extends BasePredictor {
 
 	@Override

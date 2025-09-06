@@ -13,11 +13,6 @@ import model.ColorPrediction;
 import model.SpotPrediction;
 import utils.BetHelper;
 
-/**
- * 出現回数による予測器(出目の履歴内のみ).
- *
- * @author cyrus
- */
 public class CountPredictor2 extends BasePredictor {
 
 	@Override
@@ -25,7 +20,6 @@ public class CountPredictor2 extends BasePredictor {
 		List<SpotPrediction> spotPredictionList = new ArrayList<>();
 		Map<Spot, Long> countMap = getSpotTypeCountMap(rouletteContext);
 
-		// 出目毎の確率を作成
 		for (Spot spot : Spot.getAvailableList(rouletteContext.rouletteType)) {
 			if (countMap.containsKey(spot)) {
 				spotPredictionList.add(new SpotPrediction(spot,
@@ -42,7 +36,6 @@ public class CountPredictor2 extends BasePredictor {
 		List<BetTypePrediction> betTypePredictionList = new ArrayList<>();
 		Map<BetType, Long> countMap = getBetTypeCountMap(rouletteContext);
 
-		// ベットの種類毎の確率を作成
 		for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
 			if (countMap.containsKey(betType)) {
 				betTypePredictionList.add(new BetTypePrediction(betType,
@@ -57,7 +50,6 @@ public class CountPredictor2 extends BasePredictor {
 	@Override
 	public ColorPrediction getNextColorPrediction(RouletteContext rouletteContext) {
 		Map<Spot, Long> countMap = getSpotTypeCountMap(rouletteContext);
-		// 色毎の出現回数をカウント
 		double redCount = 0;
 		double blackCount = 0;
 		double greenCount = 0;
@@ -75,23 +67,15 @@ public class CountPredictor2 extends BasePredictor {
 		double totalCount = redCount + blackCount + greenCount;
 
 		if (0 < totalCount) {
-			// 出現の割合を設定
 			return new ColorPrediction(redCount / totalCount, blackCount / totalCount, greenCount / totalCount);
 		} else {
 			return super.getNextColorPrediction(rouletteContext);
 		}
 	}
 
-	/**
-	 * 出目毎出現回数のマップを取得.
-	 *
-	 * @param rouletteContext
-	 * @return
-	 */
 	private Map<Spot, Long> getSpotTypeCountMap(RouletteContext rouletteContext) {
 		Map<Spot, Long> countMap = new HashMap<>();
 
-		// 出現回数を作成
 		for (Spot spot : rouletteContext.spotHistoryList) {
 			if (countMap.containsKey(spot)) {
 				countMap.put(spot, countMap.get(spot) + 1L);
@@ -102,16 +86,9 @@ public class CountPredictor2 extends BasePredictor {
 		return countMap;
 	}
 
-	/**
-	 * ベットの種類毎出現回数のマップを取得.
-	 *
-	 * @param rouletteContext
-	 * @return
-	 */
 	private Map<BetType, Long> getBetTypeCountMap(RouletteContext rouletteContext) {
 		Map<BetType, Long> countMap = new HashMap<>();
 
-		// 出現回数を作成
 		for (Spot spot : rouletteContext.spotHistoryList) {
 			for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
 				if (BetHelper.isWin(betType, spot)) {

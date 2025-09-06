@@ -7,19 +7,8 @@ import application.RouletteContext;
 import enums.BetType;
 import model.Bet;
 
-/**
- * 666法.<br>
- * https://casino-kingdom.com/666-strategy/
- *
- * @author cyrus
- */
 public class TripleSixStrategy extends BaseStrategy {
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public TripleSixStrategy(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}

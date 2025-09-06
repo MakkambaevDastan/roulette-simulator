@@ -19,19 +19,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import strategy.BaseStrategy;
 
-/**
- * 戦略ヘルパー.
- *
- * @author cyrus
- */
 public class StrategyHelper {
 
-	/**
-	 * 戦略のインスタンス一覧を取得.
-	 *
-	 * @param rouletteContext
-	 * @return
-	 */
 	public static ObservableList<BaseStrategy> createStrategyList(Set<Class<? extends BaseStrategy>> strategyClassSet,
 			RouletteContext rouletteContext) {
 		ObservableList<BaseStrategy> strategyList = FXCollections.observableArrayList();
@@ -46,11 +35,6 @@ public class StrategyHelper {
 		return strategyList;
 	}
 
-	/**
-	 * 使用する戦略のクラス一覧を保存.
-	 *
-	 * @param strategyClassSet
-	 */
 	public static void saveEnableStrategyClassSet(Set<Class<? extends BaseStrategy>> strategyClassSet) {
 		File destFile = FileHelper.getSettingFile(Configurations.ENABLE_STRATEGY_LIST_SETTING_FILE_NAME);
 		try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(destFile, false)))) {
@@ -62,11 +46,6 @@ public class StrategyHelper {
 		}
 	}
 
-	/**
-	 * 使用する戦略のクラス一覧を取得.
-	 *
-	 * @return
-	 */
 	public static Set<Class<? extends BaseStrategy>> getEnableStrategyClassSet() {
 		Set<Class<? extends BaseStrategy>> strategyClassSet = new HashSet<>();
 		File srcFile = FileHelper.getSettingFile(Configurations.ENABLE_STRATEGY_LIST_SETTING_FILE_NAME);
@@ -84,11 +63,6 @@ public class StrategyHelper {
 		return strategyClassSet;
 	}
 
-	/**
-	 * 全ての戦略のクラス一覧を取得.
-	 *
-	 * @return
-	 */
 	public static Set<Class<? extends BaseStrategy>> getAllStrategyClassSet() {
 		Set<Class<? extends BaseStrategy>> strategyClassSet = new HashSet<>();
 		try {

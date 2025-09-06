@@ -7,18 +7,8 @@ import application.RouletteContext;
 import enums.BetType;
 import model.Bet;
 
-/**
- * マーチンゲール法(赤・黒のうち確率の高い方).
- *
- * @author cyrus
- */
 public class MartingaleStrategy2 extends BaseStrategy {
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public MartingaleStrategy2(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -30,7 +20,6 @@ public class MartingaleStrategy2 extends BaseStrategy {
 
 	@Override
 	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 使用するベットの種類
 		BetType useBetType;
 		if (rouletteContext.getBlackRate() <= rouletteContext.getRedRate()) {
 			useBetType = BetType.RED;
@@ -38,13 +27,10 @@ public class MartingaleStrategy2 extends BaseStrategy {
 			useBetType = BetType.BLACK;
 		}
 
-		// 前回当選した場合
 		if (wasLastBetWon(rouletteContext)) {
-			// 最小ベット額をベット
 			return Collections.singletonList(new Bet(useBetType, rouletteContext.minimumBet));
 		} else {
-			// 前回のベット額の倍額をベット
-			// FIXME 最大ベット額を考慮
+			// FIXME
 			return Collections.singletonList(new Bet(useBetType, (getLastTotalBetValue() * 2)));
 		}
 	}

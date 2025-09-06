@@ -23,22 +23,11 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import utils.LogHelper;
 
-/**
- * 初期設定画面コントローラー.
- *
- * @author cyrus
- */
 public class InitialSettingController extends BaseController {
 
-	/**
-	 * このアプリについて.
-	 */
 	@FXML
 	private MenuItem aboutMenuItem;
 
-	/**
-	 * ルーレットのタイプ.
-	 */
 	@FXML
 	private RadioButton rouletteTypeRadioButton1;
 
@@ -48,69 +37,39 @@ public class InitialSettingController extends BaseController {
 	@FXML
 	private RadioButton rouletteTypeRadioButton3;
 
-	/**
-	 * 初期所持金.
-	 */
 	@FXML
 	private TextField initialBalanceTextField;
 
-	/**
-	 * 最小ベット額.
-	 */
 	@FXML
 	private TextField minimumBetTextField;
 
-	/**
-	 * 最大ベット額.
-	 */
 	@FXML
 	private TextField maximumBetTextField;
 
-	/**
-	 * 実行モード.
-	 */
 	@FXML
 	private RadioButton runModeRadioButton1;
 
 	@FXML
 	private RadioButton runModeRadioButton2;
 
-	/**
-	 * ヒートマップレイアウト.
-	 */
 	@FXML
 	private RadioButton heatmapLayoutRadioButton1;
 
 	@FXML
 	private RadioButton heatmapLayoutRadioButton2;
 
-	/**
-	 * 出目の生成方法.
-	 */
 	@FXML
 	private ComboBox<String> spotGenerateTypeComboBox;
 
-	/**
-	 * 戦略選択ボタン.
-	 */
 	@FXML
 	private Button selectStrategyButton;
 
-	/**
-	 * スタートボタン.
-	 */
 	@FXML
 	private Button startButton;
 
-	/**
-	 * シミュレーション速度スライダー.
-	 */
 	@FXML
 	private Slider simulationSpeedSlider;
 
-	/**
-	 * シミュレーション速度ラベル.
-	 */
 	@FXML
 	private Label simulationSpeedLabel;
 
@@ -121,12 +80,10 @@ public class InitialSettingController extends BaseController {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		// 初期値を設定
 		initialBalanceTextField.setText(String.valueOf(Configurations.DEFAULT_INITIAL_BALANCE));
 		minimumBetTextField.setText(String.valueOf(Configurations.DEFAULT_MINIMUM_BET));
 		maximumBetTextField.setText(String.valueOf(Configurations.DEFAULT_MAXIMUM_BET));
 
-		// 出目の生成方法のComboBoxを初期化
 		spotGenerateTypeComboBox.getItems().addAll(
 			"ランダム",
 			"数字の順番", 
@@ -135,56 +92,39 @@ public class InitialSettingController extends BaseController {
 			"ランダム(黒のみ)",
 			"ランダム(1以外)"
 		);
-		spotGenerateTypeComboBox.getSelectionModel().select("ランダム"); // デフォルト選択
+		spotGenerateTypeComboBox.getSelectionModel().select(" ");
 
-		// このアプリについて
 		aboutMenuItem.setOnAction(event -> {
-			// アラートを表示
 			Alert alert = new Alert(Alert.AlertType.INFORMATION);
-			alert.setTitle("ルーレットシミュレーター " + Main.class.getPackage().getImplementationVersion());
+			alert.setTitle("Title " + Main.class.getPackage().getImplementationVersion());
 			alert.setHeaderText("Roulette Simulator");
 			alert.setContentText("Copyright (c) 2018 cyrus");
 			alert.show();
 		});
 
-		// 戦略選択ボタンをクリックした時
 		selectStrategyButton.setOnMouseClicked(event -> {
-			// 新しいウインドウを生成
 			Stage newStage = new Stage();
-			// モーダルウインドウに設定
 			newStage.initModality(Modality.APPLICATION_MODAL);
 			newStage.initOwner(getThisStage());
 
-			// 戦略選択画面を表示
 			openSelectStrategyList(newStage, createRouletteContext());
 		});
 
-		// スタートボタンをクリックした時
 		startButton.setOnMouseClicked(event -> {
-			// 新しいウインドウを生成
 			Stage newStage = new Stage();
-			// モーダルウインドウに設定
 			newStage.initModality(Modality.APPLICATION_MODAL);
 			newStage.initOwner(getThisStage());
 
-			// シミュレーションモード画面を表示
 			openSimulationMode(newStage, createRouletteContext());
 		});
 
-		// シミュレーション速度スライダーの変更監視
 		simulationSpeedSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
 			int speed = newValue.intValue();
 			simulationSpeedLabel.setText(speed + "ms");
 		});
 	}
 
-	/**
-	 * ルーレットのコンテキストを作成して取得.
-	 *
-	 * @return
-	 */
 	private RouletteContext createRouletteContext() {
-		// 設定値を取得
 		RouletteType rouletteType = null;
 		if (rouletteTypeRadioButton1.isSelected()) {
 			rouletteType = RouletteType.ONE_TO_36;
@@ -194,7 +134,6 @@ public class InitialSettingController extends BaseController {
 			rouletteType = RouletteType.AMERICAN_STYLE;
 		}
 		
-		// ヒートマップレイアウトを取得
 		HeatmapLayoutType heatmapLayoutType = null;
 		if (heatmapLayoutRadioButton1.isSelected()) {
 			heatmapLayoutType = HeatmapLayoutType.CIRCULAR;
@@ -202,7 +141,6 @@ public class InitialSettingController extends BaseController {
 			heatmapLayoutType = HeatmapLayoutType.RECTANGULAR;
 		}
 		
-		// 出目の生成方法を取得
 		String selectedSpotGenerateType = spotGenerateTypeComboBox.getSelectionModel().getSelectedItem();
 		SpotGenerateType spotGenerateType = null;
 		switch (selectedSpotGenerateType) {
@@ -225,7 +163,7 @@ public class InitialSettingController extends BaseController {
 				spotGenerateType = SpotGenerateType.RANDOM_EXCEPT_ONE;
 				break;
 			default:
-				spotGenerateType = SpotGenerateType.RANDOM; // フォールバック
+				spotGenerateType = SpotGenerateType.RANDOM;
 				break;
 		}
 		
@@ -233,7 +171,6 @@ public class InitialSettingController extends BaseController {
 		long minimumBet = Long.parseLong(minimumBetTextField.getText());
 		long maximumBet = Long.parseLong(maximumBetTextField.getText());
 
-		// 設定値を出力
 		LogHelper.info("ルーレットのタイプ=" + rouletteType.name());
 		LogHelper.info("ヒートマップレイアウト=" + heatmapLayoutType.name());
 		LogHelper.info("出目の生成方法=" + spotGenerateType.name());
@@ -246,7 +183,6 @@ public class InitialSettingController extends BaseController {
 			LogHelper.info("実行モード=" + runModeRadioButton2.getText());
 		}
 
-		// ルーレットのコンテキストを作成
 		RouletteContext context = new RouletteContext(rouletteType, heatmapLayoutType, spotGenerateType, initialBalance, minimumBet, maximumBet);
 		context.simulationSpeed = (long) simulationSpeedSlider.getValue();
 		return context;

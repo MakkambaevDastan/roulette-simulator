@@ -7,18 +7,8 @@ import application.RouletteContext;
 import enums.BetType;
 import model.Bet;
 
-/**
- * マーチンゲール法(0、00、1以外).
- *
- * @author cyrus
- */
 public class MartingaleStrategy5 extends BaseStrategy {
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
 	public MartingaleStrategy5(RouletteContext rouletteContext) {
 		super(rouletteContext);
 	}
@@ -32,22 +22,18 @@ public class MartingaleStrategy5 extends BaseStrategy {
 	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
 		List<Bet> betList = new ArrayList<>();
 
-		// 前回当選した場合
 		if (wasLastBetWon(rouletteContext)) {
-			// 最小ベット額をベット
 			for (BetType betType : getUseBetTypeList()) {
 				betList.add(new Bet(betType, rouletteContext.minimumBet));
 			}
 		} else {
 			if (hasLastBet()) {
-				// 前回のベット額の36倍をベット
-				// FIXME 最大ベット額を考慮
+				// FIXME
 				long betValue = lastBetList.get(0).value * 36;
 				for (BetType betType : getUseBetTypeList()) {
 					betList.add(new Bet(betType, betValue));
 				}
 			} else {
-				// 最小ベット額をベット
 				for (BetType betType : getUseBetTypeList()) {
 					betList.add(new Bet(betType, rouletteContext.minimumBet));
 				}
@@ -56,11 +42,6 @@ public class MartingaleStrategy5 extends BaseStrategy {
 		return betList;
 	}
 
-	/**
-	 * 使用するベットの種類一覧を取得.
-	 *
-	 * @return
-	 */
 	private static List<BetType> getUseBetTypeList() {
 		List<BetType> betTypeList = new ArrayList<>();
 		betTypeList.add(BetType.STRAIGHT_UP_2);
