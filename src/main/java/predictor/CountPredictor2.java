@@ -1,6 +1,6 @@
 package predictor;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import enums.Spot;
 import model.BetTypePrediction;
@@ -8,98 +8,110 @@ import model.ColorPrediction;
 import model.SpotPrediction;
 import utils.BetHelper;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class CountPredictor2 extends BasePredictor {
 
     @Override
-    public List<SpotPrediction> getNextSpotPredictionList(RouletteContext rouletteContext) {
-        List<SpotPrediction> spotPredictionList = new ArrayList<>();
-        Map<Spot, Long> countMap = getSpotTypeCountMap(rouletteContext);
+    public List<SpotPrediction> getNextSpotPredictionList(Context context) {
+        validateContext(context);
+        Map<Spot, Long> countMap = getSpotTypeCountMap(context);
+        double totalCount = context.getSpotHistory().size();
 
-        for (Spot spot : Spot.getAvailableList(rouletteContext.rouletteType)) {
-            if (countMap.containsKey(spot)) {
-                spotPredictionList.add(new SpotPrediction(spot,
-                        ((double) countMap.get(spot)) / ((double) rouletteContext.spotHistoryList.size())));
-            } else {
-                spotPredictionList.add(new SpotPrediction(spot, 0));
-            }
+        List<Spot> availableSpots = Spot.getAvailableList(context.getRouletteType());
+        if (availableSpots.isEmpty()) {
+            return List.of();
         }
-        return spotPredictionList;
+
+        return availableSpots.stream()
+                .map(spot -> SpotPrediction.builder()
+                        .spot(spot)
+                        .probability(calculateProbability(countMap.getOrDefault(spot, 0L), totalCount))
+                        .build())
+                .toList();
     }
 
     @Override
-    public List<BetTypePrediction> getNextBetTypePredictionList(RouletteContext rouletteContext) {
-        List<BetTypePrediction> betTypePredictionList = new ArrayList<>();
-        Map<BetType, Long> countMap = getBetTypeCountMap(rouletteContext);
+    public List<BetTypePrediction> getNextBetTypePredictionList(Context context) {
+        validateContext(context);
+        Map<BetType, Long> countMap = getBetTypeCountMap(context);
+        double totalCount = context.getSpotHistory().size();
 
-        for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
-            if (countMap.containsKey(betType)) {
-                betTypePredictionList.add(new BetTypePrediction(betType,
-                        ((double) countMap.get(betType)) / ((double) rouletteContext.spotHistoryList.size())));
-            } else {
-                betTypePredictionList.add(new BetTypePrediction(betType, 0));
-            }
+        List<BetType> availableTypes = BetType.getAvailableList(context.getRouletteType());
+        if (availableTypes.isEmpty()) {
+            return List.of();
         }
-        return betTypePredictionList;
+
+        return availableTypes.stream()
+                .map(type -> BetTypePrediction.builder()
+                        .type(type)
+                        .probability(calculateProbability(countMap.getOrDefault(type, 0L), totalCount))
+                        .build())
+                .toList();
     }
 
     @Override
-    public ColorPrediction getNextColorPrediction(RouletteContext rouletteContext) {
-        Map<Spot, Long> countMap = getSpotTypeCountMap(rouletteContext);
-        double redCount = 0;
-        double blackCount = 0;
-        double greenCount = 0;
-        for (Spot spot : Spot.getAvailableList(rouletteContext.rouletteType)) {
-            if (countMap.containsKey(spot)) {
-                if (spot.isRed()) {
-                    redCount += countMap.get(spot);
-                } else if (spot.isBlack()) {
-                    blackCount += countMap.get(spot);
-                } else if (spot.isGreen()) {
-                    greenCount += countMap.get(spot);
-                }
+    public ColorPrediction getNextColorPrediction(Context context) {
+        validateContext(context);
+        Map<Spot, Long> countMap = getSpotTypeCountMap(context);
+        List<Spot> availableSpots = Spot.getAvailableList(context.getRouletteType());
+        if (availableSpots.isEmpty()) {
+            return ColorPrediction.builder().red(0.0).black(0.0).green(0.0).build();
+        }
+
+        double red = 0;
+        double black = 0;
+        double green = 0;
+        for (Spot spot : availableSpots) {
+            long spotCount = countMap.getOrDefault(spot, 0L);
+            if (spot.isRed()) {
+                red += spotCount;
+            } else if (spot.isBlack()) {
+                black += spotCount;
+            } else if (spot.isGreen()) {
+                green += spotCount;
             }
         }
-        double totalCount = redCount + blackCount + greenCount;
+        double totalCount = red + black + green;
 
-        if (0 < totalCount) {
-            return new ColorPrediction(redCount / totalCount, blackCount / totalCount, greenCount / totalCount);
-        } else {
-            return super.getNextColorPrediction(rouletteContext);
-        }
+        return ColorPrediction.builder()
+                .red(calculateProbability(red, totalCount))
+                .black(calculateProbability(black, totalCount))
+                .green(calculateProbability(green, totalCount))
+                .build();
     }
 
-    private Map<Spot, Long> getSpotTypeCountMap(RouletteContext rouletteContext) {
+    private Map<Spot, Long> getSpotTypeCountMap(Context context) {
         Map<Spot, Long> countMap = new HashMap<>();
+        for (Spot spot : context.getSpotHistory()) {
+            countMap.merge(spot, 1L, Long::sum);
+        }
+        return countMap;
+    }
 
-        for (Spot spot : rouletteContext.spotHistoryList) {
-            if (countMap.containsKey(spot)) {
-                countMap.put(spot, countMap.get(spot) + 1L);
-            } else {
-                countMap.put(spot, 1L);
+    private Map<BetType, Long> getBetTypeCountMap(Context context) {
+        Map<BetType, Long> countMap = new HashMap<>();
+        List<BetType> availableTypes = BetType.getAvailableList(context.getRouletteType());
+        for (Spot spot : context.getSpotHistory()) {
+            for (BetType betType : availableTypes) {
+                if (BetHelper.isWin(betType, spot)) {
+                    countMap.merge(betType, 1L, Long::sum);
+                }
             }
         }
         return countMap;
     }
 
-    private Map<BetType, Long> getBetTypeCountMap(RouletteContext rouletteContext) {
-        Map<BetType, Long> countMap = new HashMap<>();
+    private void validateContext(Context context) {
+        Objects.requireNonNull(context, "Context must not be null");
+        Objects.requireNonNull(context.getRouletteType(), "Roulette type must not be null");
+        Objects.requireNonNull(context.getSpotHistory(), "Spot history must not be null");
+    }
 
-        for (Spot spot : rouletteContext.spotHistoryList) {
-            for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
-                if (BetHelper.isWin(betType, spot)) {
-                    if (countMap.containsKey(betType)) {
-                        countMap.put(betType, countMap.get(betType) + 1L);
-                    } else {
-                        countMap.put(betType, 1L);
-                    }
-                }
-            }
-        }
-        return countMap;
+    private double calculateProbability(double occurrences, double totalCount) {
+        return totalCount == 0 ? 0.0 : occurrences / totalCount;
     }
 }

@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -10,48 +10,43 @@ import java.util.List;
 
 public class MonteCarloStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.FIRST_DOZEN;
+    private static final BetType TYPE = BetType.FIRST_DOZEN;
 
-    private LinkedList<Integer> numberList = new LinkedList<>();
+    private final LinkedList<Integer> numbers = new LinkedList<>();
 
-    public MonteCarloStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public MonteCarloStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "モンテカルロ法(1stダズンのみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        if (wasLastBetWon(rouletteContext)) {
+    public List<Bet> getNextInternal(Context context) {
+        if (wasLastBetWon(context)) {
             for (int i = 0; i < 2; i++) {
-                if (!numberList.isEmpty()) {
-                    numberList.removeFirst();
+                if (!numbers.isEmpty()) {
+                    numbers.removeFirst();
                 }
             }
             for (int i = 0; i < 2; i++) {
-                if (!numberList.isEmpty()) {
-                    numberList.removeLast();
+                if (!numbers.isEmpty()) {
+                    numbers.removeLast();
                 }
             }
-        } else {
-            if (hasLastBet()) {
-                int sum = numberList.getFirst() + numberList.getLast();
-                numberList.addLast(sum);
-            }
+        } else if (hasLastBet()) {
+            numbers.addLast(numbers.getFirst() + numbers.getLast());
         }
 
-        if (numberList.size() <= 1) {
-            numberList.clear();
-            numberList.addLast(1);
-            numberList.addLast(2);
-            numberList.addLast(3);
+        if (numbers.size() <= 1) {
+            numbers.clear();
+            numbers.addLast(1);
+            numbers.addLast(2);
+            numbers.addLast(3);
         }
-
-        int multiplier = numberList.getFirst() + numberList.getLast();
-
-        return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * multiplier));
+        int multiplier = numbers.getFirst() + numbers.getLast();
+        return Collections.singletonList(Bet.builder().type(TYPE).value(context.getMin() * multiplier).build());
     }
 }

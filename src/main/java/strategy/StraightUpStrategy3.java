@@ -1,47 +1,53 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
+import enums.BetType;
 import enums.Spot;
 import model.Bet;
 import utils.BetHelper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class StraightUpStrategy3 extends BaseStrategy {
 
     private int count = 0;
 
-    public StraightUpStrategy3(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public StraightUpStrategy3(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "ストレート複数賭け2";
     }
 
+
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        List<Bet> betList = new ArrayList<>();
+    public List<Bet> getNextInternal(Context context) {
+        count = wasLastBetWon(context) ? count + 1 : 0;
 
-        if (wasLastBetWon(rouletteContext)) {
-            count++;
-        } else {
-            count = 0;
-        }
+        List<Spot> spotHistory = context.getSpotHistory();
+        Set<Spot> excludedSpots = new HashSet<>(spotHistory.subList(
+                Math.max(0, spotHistory.size() - count),
+                spotHistory.size()
+        ));
 
-        LOOP1:
-        for (Spot spot : Spot.getAvailableList(rouletteContext.rouletteType)) {
+        List<Spot> availableSpots = Spot.getAvailableList(context.getRouletteType());
 
-            for (int i = 0; i < Math.min(rouletteContext.spotHistoryList.size(), count); i++) {
-                if (spot == rouletteContext.spotHistoryList.get(rouletteContext.spotHistoryList.size() - (i + 1))) {
-                    continue LOOP1;
-                }
-            }
-            betList.add(new Bet(BetHelper.getStraightUpBetType(spot), rouletteContext.minimumBet));
-        }
-
-        return betList;
+        return availableSpots.stream()
+                .filter(spot -> !excludedSpots.contains(spot))
+                .map(spot -> {
+                    BetType type = BetHelper.getStraightUpBetType(spot);
+                    return Bet.builder()
+                            .type(type)
+                            .value(context.getMin())
+                            .build();
+                })
+                .toList();
     }
 }

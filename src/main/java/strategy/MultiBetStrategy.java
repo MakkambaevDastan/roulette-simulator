@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import model.Bet;
 import model.BetTypePrediction;
 import predictor.BasePredictor;
@@ -9,42 +9,33 @@ import utils.PredictorHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MultiBetStrategy extends BaseStrategy {
 
     private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(MarkovPredictor2.class);
 
-    public MultiBetStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public MultiBetStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "複数賭け(予測器を使用)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        List<Bet> betList = new ArrayList<>();
+    public List<Bet> getNextInternal(Context context) {
+        long limit = Math.max(curBalance, context.getStart()) / 10;
+        limit = Math.min(limit, context.getMax());
 
-        long limit = currentBalance / 10;
-        if (limit < 0) {
-            limit = rouletteContext.initialBalance / 10;
-        }
-        if (rouletteContext.maximumBet < limit) {
-            limit = rouletteContext.maximumBet;
-        }
-
-        for (BetTypePrediction betTypePrediction : PREDICTOR.getNextBetTypePredictionList(rouletteContext)) {
-            if (0.3 < betTypePrediction.probability) {
-                long betValue = (long) (limit * betTypePrediction.probability);
-                if (rouletteContext.minimumBet < betValue) {
-                    betList.add(new Bet(betTypePrediction.betType, betValue));
-                } else {
-                    betList.add(new Bet(betTypePrediction.betType, rouletteContext.minimumBet));
-                }
-            }
-        }
-        return betList;
+        final long finalLimit = limit;
+        return PREDICTOR.getNextBetTypePredictionList(context).stream()
+                .filter(prediction -> prediction.probability() > 0.3)
+                .map(prediction -> Bet.builder()
+                        .type(prediction.type())
+                        .value(Math.max(context.getMin(), (long) (finalLimit * prediction.probability())))
+                        .build())
+                .toList();
     }
 }

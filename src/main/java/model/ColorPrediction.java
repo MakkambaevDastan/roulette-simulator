@@ -1,16 +1,7 @@
 package model;
 
-public class ColorPrediction {
+import lombok.Builder;
 
-    public double redProbability;
-
-    public double blackProbability;
-
-    public double greenProbability;
-
-    public ColorPrediction(double redProbability, double blackProbability, double greenProbability) {
-        this.redProbability = redProbability;
-        this.blackProbability = blackProbability;
-        this.greenProbability = greenProbability;
-    }
+@Builder
+public record ColorPrediction(double red, double black, double green) {
 }

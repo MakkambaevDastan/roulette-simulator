@@ -1,15 +1,8 @@
 package model;
 
 import enums.BetType;
+import lombok.Builder;
 
-public class BetTypePrediction {
-
-    public BetType betType;
-
-    public double probability;
-
-    public BetTypePrediction(BetType betType, double probability) {
-        this.betType = betType;
-        this.probability = probability;
-    }
+@Builder
+public record BetTypePrediction(BetType type, double probability) {
 }

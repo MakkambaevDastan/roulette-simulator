@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import constants.Configurations;
 import enums.BetType;
 import model.Bet;
@@ -10,26 +10,27 @@ import java.util.List;
 
 public class RandomStrategy extends BaseStrategy {
 
-    public RandomStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public RandomStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "ランダム";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
+    public List<Bet> getNextInternal(Context context) {
         List<Bet> betList = new ArrayList<>();
-        List<BetType> betTypeList = BetType.getAvailableList(rouletteContext.rouletteType);
-
+        List<BetType> betTypeList = BetType.getAvailableList(context.getRouletteType());
         for (int i = 0; i < Configurations.RANDOM.nextInt(100); i++) {
-            BetType betType = betTypeList.get(Configurations.RANDOM.nextInt(betTypeList.size()));
+            BetType type = betTypeList.get(Configurations.RANDOM.nextInt(betTypeList.size()));
             int multiplier = Configurations.RANDOM.nextInt(10) + 1;
-            betList.add(new Bet(betType, rouletteContext.minimumBet * multiplier));
+            betList.add(Bet.builder()
+                    .type(type)
+                    .value(context.getMin() * multiplier)
+                    .build());
         }
-
         return betList;
     }
 }

@@ -1,94 +1,76 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 public class TenUnitStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
+    private static final int NUMBER_COUNT = 10;
+    private static final double BUDGET_FRACTION = 0.1;
+    private static final int DEFAULT_MULTIPLIER = 1;
 
-    private LinkedList<Integer> numberList = new LinkedList<>();
-
+    private final Deque<Integer> numbers;
     private long setStartBalance;
-
     private long limitValue;
-
     private boolean useLastBetLeftNumber;
-
     private boolean useLastBetAllLimit;
-
     private int lastBetMultiplier;
-
     private int lastRemainingLimitMultiplier;
 
-    public TenUnitStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
-
-        initializeSet(rouletteContext);
+    public TenUnitStrategy(Context context) {
+        super(context);
+        this.numbers = new ArrayDeque<>(NUMBER_COUNT);
+        initializeSet(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "10ユニット法(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        if (0 <= getRemainingLimit()) {
-            initializeSet(rouletteContext);
+    public List<Bet> getNextInternal(Context context) {
+        if (getRemainingLimit() <= 0) {
+            initializeSet(context);
         }
 
-        if (wasLastBetWon(rouletteContext)) {
+        if (wasLastBetWon(context)) {
             if (!useLastBetLeftNumber && !useLastBetAllLimit) {
-                if (!numberList.isEmpty()) {
-                    numberList.removeFirst();
-                }
-                if (!numberList.isEmpty()) {
-                    numberList.removeLast();
-                }
+                if (!numbers.isEmpty()) numbers.removeFirst();
+                if (!numbers.isEmpty()) numbers.removeLast();
             } else if (useLastBetAllLimit) {
-                if (!numberList.isEmpty()) {
-                    numberList.removeFirst();
-                }
-                numberList.addFirst(lastBetMultiplier);
+                if (!numbers.isEmpty()) numbers.removeFirst();
+                numbers.addFirst(lastBetMultiplier);
             }
-        } else {
-            if (hasLastBet()) {
-                if (useLastBetAllLimit) {
-                    numberList.clear();
-                } else if (useLastBetLeftNumber) {
-                    if (!numberList.isEmpty()) {
-                        numberList.removeFirst();
-                    }
-                    numberList.addFirst(lastRemainingLimitMultiplier);
-                } else {
-                    numberList.addLast(lastBetMultiplier);
-                }
+        } else if (hasLastBet()) {
+            if (useLastBetAllLimit) {
+                numbers.clear();
+            } else if (useLastBetLeftNumber) {
+                if (!numbers.isEmpty()) numbers.removeFirst();
+                numbers.addFirst(lastRemainingLimitMultiplier);
+            } else {
+                numbers.addLast(lastBetMultiplier);
             }
         }
-        useLastBetLeftNumber = false;
-        useLastBetAllLimit = false;
 
-        if (numberList.isEmpty()) {
-            numberList.clear();
-            for (int i = 0; i < 10; i++) {
-                numberList.addLast(1);
+        if (numbers.isEmpty()) {
+            for (int i = 0; i < NUMBER_COUNT; i++) {
+                numbers.addLast(DEFAULT_MULTIPLIER);
             }
-            initializeSet(rouletteContext);
+            initializeSet(context);
         }
 
-        int multiplier = numberList.getFirst() + numberList.getLast();
-
-        lastRemainingLimitMultiplier = (int) (getRemainingLimit() / rouletteContext.minimumBet);
-
-        if (getRemainingLimit() < rouletteContext.minimumBet * multiplier) {
-            if (rouletteContext.minimumBet * numberList.getFirst() < getRemainingLimit()) {
-                multiplier = numberList.getFirst();
+        int multiplier = numbers.getFirst() + numbers.getLast();
+        lastRemainingLimitMultiplier = (int) (getRemainingLimit() / context.getMin());
+        if (getRemainingLimit() < context.getMin() * multiplier) {
+            if (context.getMin() * numbers.getFirst() < getRemainingLimit()) {
+                multiplier = numbers.getFirst();
                 useLastBetLeftNumber = true;
             } else {
                 multiplier = lastRemainingLimitMultiplier;
@@ -96,26 +78,17 @@ public class TenUnitStrategy extends BaseStrategy {
             }
         }
 
-        if (multiplier <= 0) {
-            multiplier = 1;
-        }
-
-        lastBetMultiplier = multiplier;
-        return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * multiplier));
+        lastBetMultiplier = Math.max(multiplier, 1);
+        long betValue = context.getMin() * lastBetMultiplier;
+        return List.of(Bet.builder().type(TYPE).value(betValue).build());
     }
 
-    private void initializeSet(RouletteContext rouletteContext) {
-        if (0 < currentBalance) {
-            setStartBalance = currentBalance;
-            // TODO
-            limitValue = currentBalance / 10;
-        } else {
-            setStartBalance = currentBalance;
-            limitValue = rouletteContext.initialBalance / 10;
-        }
+    private void initializeSet(Context context) {
+        setStartBalance = Math.max(curBalance, context.getStart());
+        limitValue = (long) (setStartBalance * BUDGET_FRACTION);
     }
 
     private long getRemainingLimit() {
-        return limitValue - (setStartBalance - currentBalance);
+        return limitValue - (setStartBalance - curBalance);
     }
 }

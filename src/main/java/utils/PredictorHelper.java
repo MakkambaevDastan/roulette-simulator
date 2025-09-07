@@ -2,22 +2,28 @@ package utils;
 
 import predictor.BasePredictor;
 
-import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class PredictorHelper {
+public final class PredictorHelper {
 
-    private static final Map<Class<? extends BasePredictor>, BasePredictor> INSTANCE_MAP = new HashMap<>();
+    private static final Map<Class<? extends BasePredictor>, BasePredictor> PREDICTOR_CACHE = new ConcurrentHashMap<>();
+
+    private PredictorHelper() {
+        throw new AssertionError("PredictorHelper cannot be instantiated");
+    }
 
     public static BasePredictor getInstance(Class<? extends BasePredictor> clazz) {
-        try {
-            if (!INSTANCE_MAP.containsKey(clazz)) {
-                INSTANCE_MAP.put(clazz, clazz.newInstance());
+        Objects.requireNonNull(clazz, "Predictor class must not be null");
+
+        return PREDICTOR_CACHE.computeIfAbsent(clazz, key -> {
+            try {
+                return key.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                throw new IllegalArgumentException("Failed to create instance of " + key.getName(), e);
             }
-            return INSTANCE_MAP.get(clazz);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        });
     }
 }

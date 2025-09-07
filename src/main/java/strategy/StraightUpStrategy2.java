@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 import model.SpotPrediction;
@@ -11,42 +11,38 @@ import utils.PredictorHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class StraightUpStrategy2 extends BaseStrategy {
 
     private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(CountPredictor2.class);
 
-    public StraightUpStrategy2(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public StraightUpStrategy2(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "ストレート複数賭け(予測器を使用)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        List<Bet> betList = new ArrayList<>();
-
-        long limit = currentBalance / 10;
-        if (limit < 0) {
-            limit = rouletteContext.initialBalance / 10;
-        }
-
-        for (SpotPrediction spotPrediction : PREDICTOR.getNextSpotPredictionList(rouletteContext)) {
-
-            BetType useBetType = BetHelper.getStraightUpBetType(spotPrediction.spot);
-
-            if (0.03 < spotPrediction.probability) {
-                long betValue = (long) (limit * spotPrediction.probability);
-                if (rouletteContext.minimumBet < betValue) {
-                    betList.add(new Bet(useBetType, betValue));
-                } else {
-                    betList.add(new Bet(useBetType, rouletteContext.minimumBet));
-                }
-            }
-        }
-        return betList;
+    public List<Bet> getNextInternal(Context context) {
+        final double PROBABILITY_THRESHOLD = 0.03;
+        final double BUDGET_FRACTION = 0.1;
+        long limit = (long) (Math.max(curBalance, context.getStart()) * BUDGET_FRACTION);
+        List<SpotPrediction> predictions = PREDICTOR.getNextSpotPredictionList(context);
+        return predictions.stream()
+                .filter(prediction -> prediction.probability() > PROBABILITY_THRESHOLD)
+                .map(prediction -> {
+                    BetType type = BetHelper.getStraightUpBetType(prediction.spot());
+                    long value = Math.max(context.getMin(), (long) (limit * prediction.probability()));
+                    return Bet.builder()
+                            .type(type)
+                            .value(value)
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

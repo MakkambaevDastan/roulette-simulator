@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -9,29 +9,28 @@ import java.util.List;
 
 public class SevenKaimeStrategy extends BaseStrategy {
 
-    public SevenKaimeStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public SevenKaimeStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "7回目の法則(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
+    public List<Bet> getNextInternal(Context context) {
         List<Bet> betList = new ArrayList<>();
-        if (7 <= rouletteContext.spotHistoryList.size()) {
-
+        if (7 <= context.getSpotHistory().size()) {
             boolean notMatched = false;
             for (int i = 0; i < 7; i++) {
-                if (!rouletteContext.spotHistoryList.get(rouletteContext.spotHistoryList.size() - (1 + i)).isBlack()) {
+                if (!context.getSpotHistory().get(context.getSpotHistory().size() - (1 + i)).isBlack()) {
                     notMatched = true;
+                    break;
                 }
             }
-
             if (!notMatched) {
-                betList.add(new Bet(BetType.RED, rouletteContext.minimumBet));
+                betList.add(Bet.builder().type(BetType.RED).value(context.getMin()).build());
             }
         }
         return betList;

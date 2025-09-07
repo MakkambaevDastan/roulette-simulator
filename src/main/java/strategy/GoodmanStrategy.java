@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -9,37 +9,31 @@ import java.util.List;
 
 public class GoodmanStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-    private int setCount;
+    private int count;
 
-    public GoodmanStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public GoodmanStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "グッドマン法(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        if (!wasLastBetWon(rouletteContext)) {
-            setCount = 0;
-        }
+    public List<Bet> getNextInternal(Context context) {
+        count = wasLastBetWon(context) ? (count + 1) : 0;
+        return switch (count) {
+            case 0 -> create(context.getMin());
+            case 1 -> create(context.getMin() * 2);
+            case 2 -> create(context.getMin() * 3);
+            default -> create(context.getMin() * 5);
+        };
+    }
 
-        setCount++;
-
-        switch (setCount) {
-            case 0:
-                return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-            case 1:
-                return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * 2));
-            case 2:
-                return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * 3));
-            case 3:
-            default:
-                return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * 5));
-        }
+    private List<Bet> create(long value) {
+        return Collections.singletonList(Bet.builder().type(TYPE).value(value).build());
     }
 }

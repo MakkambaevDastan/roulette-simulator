@@ -1,36 +1,44 @@
 package strategy;
 
-import application.RouletteContext;
-import enums.BetType;
+import application.Context;
 import model.Bet;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static enums.BetType.RED;
+import static enums.BetType.SPLIT_0_2;
+import static enums.BetType.SPLIT_10_13;
+import static enums.BetType.SPLIT_17_20;
+import static enums.BetType.SPLIT_26_29;
+import static enums.BetType.SPLIT_28_31;
+import static enums.BetType.SPLIT_8_11;
+import static enums.BetType.STRAIGHT_UP_15;
+import static enums.BetType.STRAIGHT_UP_4;
+import static enums.BetType.STRAIGHT_UP_6;
+
 public class TripleSixStrategy extends BaseStrategy {
 
-    public TripleSixStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public TripleSixStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "666法";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        List<Bet> betList = new ArrayList<>();
-        betList.add(new Bet(BetType.RED, rouletteContext.minimumBet * 36));
-        betList.add(new Bet(BetType.SPLIT_0_2, rouletteContext.minimumBet * 4));
-        betList.add(new Bet(BetType.SPLIT_8_11, rouletteContext.minimumBet * 4));
-        betList.add(new Bet(BetType.SPLIT_10_13, rouletteContext.minimumBet * 4));
-        betList.add(new Bet(BetType.SPLIT_17_20, rouletteContext.minimumBet * 4));
-        betList.add(new Bet(BetType.SPLIT_26_29, rouletteContext.minimumBet * 4));
-        betList.add(new Bet(BetType.SPLIT_28_31, rouletteContext.minimumBet * 4));
-        betList.add(new Bet(BetType.STRAIGHT_UP_4, rouletteContext.minimumBet * 2));
-        betList.add(new Bet(BetType.STRAIGHT_UP_6, rouletteContext.minimumBet * 2));
-        betList.add(new Bet(BetType.STRAIGHT_UP_15, rouletteContext.minimumBet * 2));
-        return betList;
+    public List<Bet> getNextInternal(Context context) {
+        return List.of(Bet.builder().type(RED).value(context.getMin() * 36).build(),
+                Bet.builder().type(SPLIT_0_2).value(context.getMin() * 4).build(),
+                Bet.builder().type(SPLIT_8_11).value(context.getMin() * 4).build(),
+                Bet.builder().type(SPLIT_10_13).value(context.getMin() * 4).build(),
+                Bet.builder().type(SPLIT_17_20).value(context.getMin() * 4).build(),
+                Bet.builder().type(SPLIT_26_29).value(context.getMin() * 4).build(),
+                Bet.builder().type(SPLIT_28_31).value(context.getMin() * 4).build(),
+                Bet.builder().type(STRAIGHT_UP_4).value(context.getMin() * 2).build(),
+                Bet.builder().type(STRAIGHT_UP_6).value(context.getMin() * 2).build(),
+                Bet.builder().type(STRAIGHT_UP_15).value(context.getMin() * 2).build());
     }
 }

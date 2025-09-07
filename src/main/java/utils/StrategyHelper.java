@@ -1,64 +1,100 @@
 package utils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import constants.Configurations;
+import strategy.BaseStrategy;
+
+import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.google.common.reflect.ClassPath;
 
-import constants.Configurations;
-import strategy.BaseStrategy;
-
 public class StrategyHelper {
 
-    public static void saveEnableStrategyClassSet(Set<Class<? extends BaseStrategy>> strategyClassSet) {
-        File destFile = FileHelper.getSettingFile(Configurations.ENABLE_STRATEGY_LIST_SETTING_FILE_NAME);
-        try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(destFile, false)))) {
-            for (Class<? extends BaseStrategy> strategyClass : strategyClassSet) {
-                printWriter.println(strategyClass.getName());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private static final Logger LOGGER = Logger.getLogger(StrategyHelper.class.getName());
+    private static final String STRATEGY_PACKAGE = "strategy";
+
+    public static void saveEnableStrategyClassSet(Set<Class<? extends BaseStrategy>> strategyClassSet)
+            throws IOException {
+        Objects.requireNonNull(strategyClassSet, "Strategy class set must not be null");
+        Path destPath = getSettingFilePath();
+        try {
+            Files.write(destPath,
+                    strategyClassSet.stream()
+                            .map(Class::getName)
+                            .collect(Collectors.toList()),
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            LOGGER.info("Saved " + strategyClassSet.size() + " strategy classes to " + destPath);
+        } catch (IOException e) {
+            LOGGER.severe("Failed to save strategy class set to " + destPath + ": " + e.getMessage());
+            throw e;
         }
     }
 
-    public static Set<Class<? extends BaseStrategy>> getEnableStrategyClassSet() {
+
+    public static Set<Class<? extends BaseStrategy>> getEnableStrategyClassSet() throws IOException {
         Set<Class<? extends BaseStrategy>> strategyClassSet = new HashSet<>();
-        File srcFile = FileHelper.getSettingFile(Configurations.ENABLE_STRATEGY_LIST_SETTING_FILE_NAME);
+        Path srcPath = getSettingFilePath();
+
+        if (!Files.exists(srcPath) || !Files.isReadable(srcPath)) {
+            LOGGER.fine("Strategy file does not exist or is not readable: " + srcPath);
+            return strategyClassSet;
+        }
+
         try {
-            for (String line : Files.lines(srcFile.toPath()).collect(Collectors.toSet())) {
+            for (String line : Files.readAllLines(srcPath)) {
                 try {
-                    strategyClassSet.add((Class<? extends BaseStrategy>) Class.forName(line));
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    Class<?> clazz = Class.forName(line.trim());
+                    if (BaseStrategy.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers())
+                            && !clazz.isInterface()) {
+                        strategyClassSet.add((Class<? extends BaseStrategy>) clazz);
+                    } else {
+                        LOGGER.warning("Invalid strategy class: " + line);
+                    }
+                } catch (ClassNotFoundException e) {
+                    LOGGER.warning("Class not found: " + line + " - " + e.getMessage());
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.info("Loaded " + strategyClassSet.size() + " strategy classes from " + srcPath);
+        } catch (IOException e) {
+            LOGGER.severe("Failed to read strategy class set from " + srcPath + ": " + e.getMessage());
+            throw e;
         }
         return strategyClassSet;
     }
 
-    public static Set<Class<? extends BaseStrategy>> getAllStrategyClassSet() {
+    public static Set<Class<? extends BaseStrategy>> getAllStrategyClassSet() throws IOException {
         Set<Class<? extends BaseStrategy>> strategyClassSet = new HashSet<>();
         try {
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            strategyClassSet.addAll(ClassPath.from(loader)
-                    .getTopLevelClassesRecursive("strategy").stream()
+            ClassLoader loader = StrategyHelper.class.getClassLoader();
+            ClassPath.from(loader)
+                    .getTopLevelClassesRecursive(STRATEGY_PACKAGE)
+                    .stream()
                     .map(ClassPath.ClassInfo::load)
                     .filter(clazz -> BaseStrategy.class.isAssignableFrom(clazz)
-                            && !Modifier.isAbstract(clazz.getModifiers()))
+                            && !Modifier.isAbstract(clazz.getModifiers())
+                            && !clazz.isInterface())
                     .map(clazz -> (Class<? extends BaseStrategy>) clazz)
-                    .collect(Collectors.toSet()));
-        } catch (Exception e) {
-            e.printStackTrace();
+                    .forEach(strategyClassSet::add);
+            LOGGER.info("Found " + strategyClassSet.size() + " strategy classes in package " + STRATEGY_PACKAGE);
+        } catch (IOException e) {
+            LOGGER.severe("Failed to scan strategy classes: " + e.getMessage());
+            throw e;
         }
         return strategyClassSet;
+    }
+
+    private static Path getSettingFilePath() {
+        Objects.requireNonNull(Configurations.ENABLE_STRATEGY_TXT, "Strategy file name must not be null");
+        Path path = FileHelper.getSettingFile(Configurations.ENABLE_STRATEGY_TXT).toPath();
+        Objects.requireNonNull(path, "Setting file path must not be null");
+        return path;
     }
 }

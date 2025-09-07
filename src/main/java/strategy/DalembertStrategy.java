@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -9,31 +9,25 @@ import java.util.List;
 
 public class DalembertStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-    private int multiplier = 1;
+    private int multiplier;
 
-    public DalembertStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public DalembertStrategy(Context context) {
+        super(context);
+        multiplier = 1;
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "ダランベール法(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
+    public List<Bet> getNextInternal(Context context) {
         if (hasLastBet()) {
-            if (wasLastBetWon(rouletteContext)) {
-                multiplier++;
-            } else {
-                multiplier--;
-                if (multiplier <= 0) {
-                    multiplier = 1;
-                }
-            }
+            multiplier = wasLastBetWon(context) ? ++multiplier : Math.max(--multiplier, 1);
         }
-        return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * multiplier));
+        return Collections.singletonList(Bet.builder().type(TYPE).value(context.getMin() * multiplier).build());
     }
 }

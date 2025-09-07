@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import constants.Configurations;
 import enums.BetType;
 import model.Bet;
@@ -11,36 +11,36 @@ import java.util.List;
 
 public class RandomStrategy2 extends BaseStrategy {
 
-    private static int BET_LIST_SIZE = 10;
+    private static final int SIZE = 10;
 
-    public RandomStrategy2(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public RandomStrategy2(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "ランダム2";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
+    public List<Bet> getNextInternal(Context context) {
         List<Bet> betList = new ArrayList<>();
-        List<BetType> betTypeList = BetType.getAvailableList(rouletteContext.rouletteType);
-
-        if (wasLastBetWon(rouletteContext)) {
-            for (Bet bet : lastBetList) {
-                if (BetHelper.isWin(bet, rouletteContext.getLastSpot())) {
+        List<BetType> betTypeList = BetType.getAvailableList(context.getRouletteType());
+        if (wasLastBetWon(context)) {
+            for (Bet bet : lastBets) {
+                if (BetHelper.isWin(bet, context.getLastSpot())) {
                     betList.add(bet);
                 }
             }
         }
-
-        while (betList.size() < BET_LIST_SIZE) {
-            BetType betType = betTypeList.get(Configurations.RANDOM.nextInt(betTypeList.size()));
+        while (betList.size() < SIZE) {
+            BetType type = betTypeList.get(Configurations.RANDOM.nextInt(betTypeList.size()));
             int multiplier = Configurations.RANDOM.nextInt(10) + 1;
-            betList.add(new Bet(betType, rouletteContext.minimumBet * multiplier));
+            betList.add(Bet.builder()
+                    .type(type)
+                    .value(context.getMin() * multiplier)
+                    .build());
         }
-
         return betList;
     }
 }

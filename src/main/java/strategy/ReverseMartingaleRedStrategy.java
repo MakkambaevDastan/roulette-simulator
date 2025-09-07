@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -9,25 +9,23 @@ import java.util.List;
 
 public class ReverseMartingaleRedStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-    public ReverseMartingaleRedStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public ReverseMartingaleRedStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "逆マーチンゲール法(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        long thresholdValue = (long) (rouletteContext.minimumBet * Math.pow(2, 5));
-
-        if (wasLastBetWon(rouletteContext) && getLastTotalBetValue() < thresholdValue) {
-            return Collections.singletonList(new Bet(USE_BET_TYPE, (getLastTotalBetValue() * 2)));
-        } else {
-            return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-        }
+    public List<Bet> getNextInternal(Context context) {
+        long value = getLastTotalBetValue();
+       return Collections.singletonList(Bet.builder()
+                .type(TYPE)
+                .value((wasLastBetWon(context) && value < (context.getMin() * Math.pow(2, 5))) ? value * 2 : context.getMin())
+                .build());
     }
 }

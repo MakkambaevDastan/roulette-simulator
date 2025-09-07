@@ -1,37 +1,38 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
 import java.util.Collections;
 import java.util.List;
 
+import static enums.BetType.BLACK;
+import static enums.BetType.RED;
+
 public class MartingaleStrategy2 extends BaseStrategy {
 
-    public MartingaleStrategy2(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public MartingaleStrategy2(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "マーチンゲール法(赤・黒のうち確率の高い方)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        BetType useBetType;
-        if (rouletteContext.getBlackRate() <= rouletteContext.getRedRate()) {
-            useBetType = BetType.RED;
-        } else {
-            useBetType = BetType.BLACK;
-        }
-
-        if (wasLastBetWon(rouletteContext)) {
-            return Collections.singletonList(new Bet(useBetType, rouletteContext.minimumBet));
+    public List<Bet> getNextInternal(Context context) {
+        BetType type = context.getBlackRate() <= context.getRedRate() ? RED : BLACK;
+        if (wasLastBetWon(context)) {
+            return create(type, context.getMin());
         } else {
             // FIXME
-            return Collections.singletonList(new Bet(useBetType, (getLastTotalBetValue() * 2)));
+            return create(type, getLastTotalBetValue() * 2);
         }
+    }
+
+    private List<Bet> create(BetType type, long value) {
+        return Collections.singletonList(Bet.builder().type(type).value(value).build());
     }
 }

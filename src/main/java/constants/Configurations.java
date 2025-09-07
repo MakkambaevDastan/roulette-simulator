@@ -24,5 +24,5 @@ public interface Configurations {
 
     File SETTING_FILE_DIRECTORY = new File("data/settings");
 
-    String ENABLE_STRATEGY_LIST_SETTING_FILE_NAME = "enableStrategy.txt";
+    String ENABLE_STRATEGY_TXT = "enableStrategy.txt";
 }

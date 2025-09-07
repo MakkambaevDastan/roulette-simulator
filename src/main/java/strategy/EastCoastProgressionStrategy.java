@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -9,29 +9,32 @@ import java.util.List;
 
 public class EastCoastProgressionStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-    public EastCoastProgressionStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public EastCoastProgressionStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "イーストコーストプログレッション(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        if (wasLastBetWon(rouletteContext)) {
-            long betValue = (currentBalance - rouletteContext.initialBalance) / 2;
-            if (0 < betValue) {
-                return Collections.singletonList(new Bet(USE_BET_TYPE, betValue));
+    public List<Bet> getNextInternal(Context context) {
+        if (wasLastBetWon(context)) {
+            long value = (curBalance - context.getStart()) / 2;
+            if (0 < value) {
+                return create(value);
             } else {
                 // TODO
-                return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
+                return create(context.getMin());
             }
-        } else {
-            return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * 2));
         }
+        return create(context.getMin() * 2);
+    }
+
+    private List<Bet> create(long value) {
+        return Collections.singletonList(Bet.builder().type(TYPE).value(value).build());
     }
 }

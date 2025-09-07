@@ -1,15 +1,8 @@
 package model;
 
 import enums.BetType;
+import lombok.Builder;
 
-public class Bet {
-
-    public BetType betType;
-
-    public long value;
-
-    public Bet(BetType betType, long value) {
-        this.betType = betType;
-        this.value = value;
-    }
+@Builder
+public record Bet(BetType type, long value) {
 }

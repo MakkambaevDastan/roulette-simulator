@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
@@ -9,24 +9,28 @@ import java.util.List;
 
 public class GrandMartingaleStrategy extends BaseStrategy {
 
-    private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-    public GrandMartingaleStrategy(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public GrandMartingaleStrategy(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "グランマーチンゲール法(赤のみ)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-        if (wasLastBetWon(rouletteContext)) {
-            return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
+    public List<Bet> getNextInternal(Context context) {
+        if (wasLastBetWon(context)) {
+            return create(context.getMin());
         } else {
-            return Collections
-                    .singletonList(new Bet(USE_BET_TYPE, (getLastTotalBetValue() * 2 + rouletteContext.minimumBet)));
+            // FIXME
+            return create(getLastTotalBetValue() * 2 + context.getMin());
         }
+    }
+
+    private List<Bet> create(long value) {
+        return Collections.singletonList(Bet.builder().type(TYPE).value(value).build());
     }
 }

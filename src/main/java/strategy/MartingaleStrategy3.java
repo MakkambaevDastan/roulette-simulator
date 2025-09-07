@@ -1,6 +1,6 @@
 package strategy;
 
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 import model.ColorPrediction;
@@ -12,47 +12,47 @@ import utils.PredictorHelper;
 import java.util.Collections;
 import java.util.List;
 
+import static enums.BetType.BLACK;
+import static enums.BetType.RED;
+
 public class MartingaleStrategy3 extends BaseStrategy {
 
     private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(CountPredictor2.class);
 
-    public MartingaleStrategy3(RouletteContext rouletteContext) {
-        super(rouletteContext);
+    public MartingaleStrategy3(Context context) {
+        super(context);
     }
 
     @Override
-    public String getStrategyName() {
+    public String getName() {
         return "マーチンゲール法(予測器を使用)";
     }
 
     @Override
-    public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-
-        ColorPrediction colorPrediction = PREDICTOR.getNextColorPrediction(rouletteContext);
-
-        BetType useBetType;
-        if (colorPrediction.blackProbability <= colorPrediction.redProbability) {
-            useBetType = BetType.RED;
-        } else {
-            useBetType = BetType.BLACK;
-        }
+    public List<Bet> getNextInternal(Context context) {
+        ColorPrediction colorPrediction = PREDICTOR.getNextColorPrediction(context);
+        BetType type = colorPrediction.black() <= colorPrediction.red() ? RED : BLACK;
 
         boolean wonLastBet = false;
         long lastBetValue = 0;
-        if (lastBetList != null) {
-            lastBetValue = BetHelper.getTotalBetValue(lastBetList);
-            for (Bet bet : lastBetList) {
-                if (BetHelper.isWin(bet, rouletteContext.getLastSpot())) {
+        if (lastBets != null) {
+            lastBetValue = BetHelper.getTotalBetValue(lastBets);
+            for (Bet bet : lastBets) {
+                if (BetHelper.isWin(bet, context.getLastSpot())) {
                     wonLastBet = true;
                 }
             }
         }
 
         if (wonLastBet) {
-            return Collections.singletonList(new Bet(useBetType, rouletteContext.minimumBet));
+            return create(type, context.getMin());
         } else {
             // FIXME
-            return Collections.singletonList(new Bet(useBetType, (lastBetValue * 2)));
+            return create(type, (lastBetValue * 2));
         }
+    }
+
+    private List<Bet> create(BetType type, long value) {
+        return Collections.singletonList(Bet.builder().type(type).value(value).build());
     }
 }
