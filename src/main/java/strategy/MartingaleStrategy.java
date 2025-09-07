@@ -1,48 +1,36 @@
 package strategy;
 
-import java.util.Collections;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-/**
- * マーチンゲール法(赤のみ).
- *
- * @author cyrus
- */
+import java.util.Collections;
+import java.util.List;
+
 public class MartingaleStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
-	private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public MartingaleStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public MartingaleStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "マーチンゲール法(赤のみ)";
-	}
+    @Override
+    public String getName() {
+        return MartingaleStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 前回当選した場合
-		if (wasLastBetWon(rouletteContext)) {
-			// 最小ベット額をベット
-			return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-		} else {
-			// 前回のベット額の倍額をベット
-			// FIXME 最大ベット額を考慮
-			return Collections.singletonList(new Bet(USE_BET_TYPE, (getLastTotalBetValue() * 2)));
-		}
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        if (wasLastBetWon(context)) {
+            return create(context.getMin());
+        } else {
+            // FIXME
+            return create(getLastTotalBetValue() * 2);
+        }
+    }
+
+    private List<Bet> create(long value) {
+        return Collections.singletonList(Bet.builder().type(TYPE).value(value).build());
+    }
 }

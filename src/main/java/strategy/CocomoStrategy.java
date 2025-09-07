@@ -1,66 +1,37 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-/**
- * ココモ法(1stダズンのみ).<br>
- * http://www.silversandscasino.jp/strategy/cocomo.php
- *
- * @author cyrus
- */
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+
 public class CocomoStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
-	private static final BetType USE_BET_TYPE = BetType.FIRST_DOZEN;
+    private static final BetType TYPE = BetType.FIRST_DOZEN;
 
-	/**
-	 * 2回前のベット額.
-	 */
-	private long secondFromLastTotalBetValue;
+    private long secondFromLastTotalBetValue;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public CocomoStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public CocomoStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "ココモ法(1stダズンのみ)";
-	}
+    @Override
+    public String getName() {
+        return CocomoStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		List<Bet> betList = new ArrayList<>();
-
-		// 前回当選した場合
-		if (wasLastBetWon(rouletteContext)) {
-			// 最小ベット額をベット
-			betList.add(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-		} else {
-			// 直近2回のベット額の合計をベット
-			long nextBetValue = secondFromLastTotalBetValue + getLastTotalBetValue();
-			if (0 < nextBetValue) {
-				betList.add(new Bet(USE_BET_TYPE, nextBetValue));
-			} else {
-				// 最小ベット額をベット
-				betList.add(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-			}
-		}
-
-		// 2回前のベット額を更新
-		secondFromLastTotalBetValue = getLastTotalBetValue();
-
-		return betList;
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        long lastValue = getLastTotalBetValue();
+        long nextValue = secondFromLastTotalBetValue + lastValue;
+        secondFromLastTotalBetValue = lastValue;
+        return Collections.singletonList(Bet.builder()
+                .type(TYPE)
+                .value(wasLastBetWon(context) ? context.getMin() : (nextValue > 0) ? nextValue : context.getMin())
+                .build());
+    }
 }

@@ -1,52 +1,38 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-/**
- * 7回目の法則(赤のみ).<br>
- * http://www.xn--9ckk7he3f9633bhel9uq.jp/seventh_time-law.html
- *
- * @author cyrus
- */
+import java.util.ArrayList;
+import java.util.List;
+
 public class SevenKaimeStrategy extends BaseStrategy {
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public SevenKaimeStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public SevenKaimeStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "7回目の法則(赤のみ)";
-	}
+    @Override
+    public String getName() {
+        return SevenKaimeStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		List<Bet> betList = new ArrayList<>();
-		if (7 <= rouletteContext.spotHistoryList.size()) {
-
-			// 7回連続で黒であるかを判定
-			boolean notMatched = false;
-			for (int i = 0; i < 7; i++) {
-				if (!rouletteContext.spotHistoryList.get(rouletteContext.spotHistoryList.size() - (1 + i)).isBlack()) {
-					notMatched = true;
-				}
-			}
-
-			// 7回連続で黒の場合
-			if (!notMatched) {
-				betList.add(new Bet(BetType.RED, rouletteContext.minimumBet));
-			}
-		}
-		return betList;
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        List<Bet> betList = new ArrayList<>();
+        if (7 <= context.getSpotHistory().size()) {
+            boolean notMatched = false;
+            for (int i = 0; i < 7; i++) {
+                if (!context.getSpotHistory().get(context.getSpotHistory().size() - (1 + i)).isBlack()) {
+                    notMatched = true;
+                    break;
+                }
+            }
+            if (!notMatched) {
+                betList.add(Bet.builder().type(BetType.RED).value(context.getMin()).build());
+            }
+        }
+        return betList;
+    }
 }

@@ -1,51 +1,31 @@
 package strategy;
 
-import java.util.Collections;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-/**
- * 逆マーチンゲール法(赤のみ).<br>
- * http://www.silversandscasino.jp/strategy/paley.php
- *
- * @author cyrus
- */
+import java.util.Collections;
+import java.util.List;
+
 public class ReverseMartingaleRedStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
-	private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public ReverseMartingaleRedStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public ReverseMartingaleRedStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "逆マーチンゲール法(赤のみ)";
-	}
+    @Override
+    public String getName() {
+        return ReverseMartingaleRedStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// ベットを中断する閾値
-		long thresholdValue = (long) (rouletteContext.minimumBet * Math.pow(2, 5));
-
-		// 前回当選した場合
-		if (wasLastBetWon(rouletteContext) && getLastTotalBetValue() < thresholdValue) {
-			// 前回のベット額の倍額をベット
-			return Collections.singletonList(new Bet(USE_BET_TYPE, (getLastTotalBetValue() * 2)));
-		} else {
-			// 最小ベット額をベット
-			return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-		}
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        long value = getLastTotalBetValue();
+       return Collections.singletonList(Bet.builder()
+                .type(TYPE)
+                .value((wasLastBetWon(context) && value < (context.getMin() * Math.pow(2, 5))) ? value * 2 : context.getMin())
+                .build());
+    }
 }

@@ -1,40 +1,29 @@
 package utils;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import predictor.BasePredictor;
 
-/**
- * 予測器ヘルパー.
- *
- * @author cyrus
- */
-public class PredictorHelper {
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
-	/**
-	 * 予測器のインスタンスを保持するマップ.
-	 */
-	private static final Map<Class<? extends BasePredictor>, BasePredictor> INSTANCE_MAP = new HashMap<>();
+public final class PredictorHelper {
 
-	/**
-	 * 予測器のインスタンスを取得.
-	 *
-	 * @param clazz
-	 * @return
-	 */
-	public static BasePredictor getInstance(Class<? extends BasePredictor> clazz) {
-		try {
-			if (!INSTANCE_MAP.containsKey(clazz)) {
-				// インスタンスを作成
-				INSTANCE_MAP.put(clazz, clazz.newInstance());
-			}
-			// インスタンスを取得
-			return INSTANCE_MAP.get(clazz);
-		} catch (Exception e) {
-			e.printStackTrace();
+    private static final Map<Class<? extends BasePredictor>, BasePredictor> PREDICTOR_CACHE = new ConcurrentHashMap<>();
 
-			return null;
-		}
-	}
+    private PredictorHelper() {
+        throw new AssertionError("PredictorHelper cannot be instantiated");
+    }
+
+    public static BasePredictor getInstance(Class<? extends BasePredictor> clazz) {
+        Objects.requireNonNull(clazz, "Predictor class must not be null");
+
+        return PREDICTOR_CACHE.computeIfAbsent(clazz, key -> {
+            try {
+                return key.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                throw new IllegalArgumentException("Failed to create instance of " + key.getName(), e);
+            }
+        });
+    }
 }

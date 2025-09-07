@@ -1,124 +1,144 @@
 package predictor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import enums.Spot;
 import model.BetTypePrediction;
+import model.ColorPrediction;
 import model.SpotPrediction;
 import utils.BetHelper;
 
-/**
- * マルコフテーブルによる予測器(出目の履歴内のみ).
- *
- * @author cyrus
- */
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 public class MarkovPredictor2 extends BasePredictor {
 
-	@Override
-	public List<SpotPrediction> getNextSpotPredictionList(RouletteContext rouletteContext) {
-		List<SpotPrediction> spotPredictionList = new ArrayList<>();
-		if (2 <= rouletteContext.spotHistoryList.size()) {
-			Map<Spot, Map<Spot, Long>> spotMarkovMap = new HashMap<>();
+    private static final int MIN_SIZE = 2;
+    private static final double PROBABILITY = 0.0;
 
-			for (int i = 0; i < rouletteContext.spotHistoryList.size() - 1; i++) {
-				// 直近2回の出目を取得
-				Spot spot1 = rouletteContext.spotHistoryList.get(i);
-				Spot spot2 = rouletteContext.spotHistoryList.get(i + 1);
+    private final Map<Spot, Map<Spot, Long>> spotMap;
+    private final EnumMap<BetType, Map<BetType, Long>> typeMap;
+    private long transitions;
 
-				// 出目毎の出現回数を更新
-				if (spotMarkovMap.containsKey(spot1)) {
-					if (spotMarkovMap.get(spot1).containsKey(spot2)) {
-						spotMarkovMap.get(spot1).put(spot2, spotMarkovMap.get(spot1).get(spot2) + 1L);
-					} else {
-						spotMarkovMap.get(spot1).put(spot2, 1L);
-					}
-				} else {
-					Map<Spot, Long> countMap = new HashMap<>();
-					countMap.put(spot2, 1L);
-					spotMarkovMap.put(spot1, countMap);
-				}
-			}
+    public MarkovPredictor2() {
+        spotMap = new HashMap<>();
+        typeMap = new EnumMap<>(BetType.class);
+        transitions = 0;
+    }
 
-			// 出目毎の確率を作成
-			for (Spot nextSpot : Spot.getAvailableList(rouletteContext.rouletteType)) {
-				if (spotMarkovMap.containsKey(rouletteContext.getLastSpot())
-						&& spotMarkovMap.get(rouletteContext.getLastSpot()).containsKey(nextSpot)) {
-					spotPredictionList.add(new SpotPrediction(nextSpot,
-							((double) spotMarkovMap.get(rouletteContext.getLastSpot()).get(nextSpot))
-									/ ((double) rouletteContext.spotHistoryList.size())));
-				}
-			}
-		}
-		return spotPredictionList;
-	}
+    @Override
+    public List<SpotPrediction> getNextSpotPredictionList(Context context) {
+        validateContext(context);
+        if (context.getSpotHistory().size() < MIN_SIZE) {
+            return List.of();
+        }
 
-	@Override
-	public List<BetTypePrediction> getNextBetTypePredictionList(RouletteContext rouletteContext) {
-		List<BetTypePrediction> betTypePredictionList = new ArrayList<>();
-		if (2 <= rouletteContext.spotHistoryList.size()) {
-			Map<BetType, Map<BetType, Long>> betTypeMarkovMap = new HashMap<>();
+        updateMarkovModel(context);
+        Map<Spot, Long> transitions = spotMap.getOrDefault(context.getLastSpot(), Map.of());
 
-			for (int i = 0; i < rouletteContext.spotHistoryList.size() - 1; i++) {
-				// 直近2回の出目を取得
-				Spot spot1 = rouletteContext.spotHistoryList.get(i);
-				Spot spot2 = rouletteContext.spotHistoryList.get(i + 1);
+        List<Spot> availableSpots = Spot.getAvailableList(context.getRouletteType());
+        if (availableSpots.isEmpty()) {
+            return List.of();
+        }
 
-				// 当選となるベットの種類一覧を取得
-				List<BetType> betTypeList1 = new ArrayList<>();
-				List<BetType> betTypeList2 = new ArrayList<>();
-				for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
-					if (BetHelper.isWin(betType, spot1)) {
-						betTypeList1.add(betType);
-					}
-					if (BetHelper.isWin(betType, spot2)) {
-						betTypeList2.add(betType);
-					}
-				}
+        return availableSpots.stream()
+                .map(spot -> SpotPrediction.builder()
+                        .spot(spot)
+                        .probability(calculateProbability(transitions.getOrDefault(spot, 0L)))
+                        .build())
+                .filter(prediction -> prediction.probability() > 0)
+                .toList();
+    }
 
-				// ベットの種類毎の出現回数を更新
-				for (BetType betType1 : betTypeList1) {
-					for (BetType betType2 : betTypeList2) {
-						if (betTypeMarkovMap.containsKey(betType1)) {
-							if (betTypeMarkovMap.get(betType1).containsKey(betType2)) {
-								betTypeMarkovMap.get(betType1).put(betType2,
-										betTypeMarkovMap.get(betType1).get(betType2) + 1L);
-							} else {
-								betTypeMarkovMap.get(betType1).put(betType2, 1L);
-							}
-						} else {
-							Map<BetType, Long> countMap = new HashMap<>();
-							countMap.put(betType2, 1L);
-							betTypeMarkovMap.put(betType1, countMap);
-						}
-					}
-				}
-			}
+    @Override
+    public List<BetTypePrediction> getNextBetTypePredictionList(Context context) {
+        validateContext(context);
+        if (context.getSpotHistory().size() < MIN_SIZE) {
+            return List.of();
+        }
 
-			// 当選となるベットの種類一覧を取得
-			List<BetType> lastSpotBetTypeList = new ArrayList<>();
-			for (BetType betType : BetType.getAvailableList(rouletteContext.rouletteType)) {
-				if (BetHelper.isWin(betType, rouletteContext.getLastSpot())) {
-					lastSpotBetTypeList.add(betType);
-				}
-			}
+        updateMarkovModel(context);
+        List<BetType> lastSpotBetTypes = BetType.getAvailableList(context.getRouletteType()).stream()
+                .filter(type -> BetHelper.isWin(type, context.getLastSpot()))
+                .toList();
 
-			// ベットの種類毎の確率を作成
-			for (BetType lastSpotBetType : lastSpotBetTypeList) {
-				for (BetType nextBetType : BetType.getAvailableList(rouletteContext.rouletteType)) {
-					if (betTypeMarkovMap.containsKey(lastSpotBetType)
-							&& betTypeMarkovMap.get(lastSpotBetType).containsKey(nextBetType)) {
-						betTypePredictionList.add(new BetTypePrediction(nextBetType,
-								((double) betTypeMarkovMap.get(lastSpotBetType).get(nextBetType))
-										/ ((double) rouletteContext.spotHistoryList.size())));
-					}
-				}
-			}
-		}
-		return betTypePredictionList;
-	}
+        List<BetType> availableTypes = BetType.getAvailableList(context.getRouletteType());
+        if (availableTypes.isEmpty()) {
+            return List.of();
+        }
+
+        return lastSpotBetTypes.stream()
+                .flatMap(lastType -> {
+                    Map<BetType, Long> transitions = typeMap.getOrDefault(lastType, Map.of());
+                    return availableTypes.stream()
+                            .map(nextType -> BetTypePrediction.builder()
+                                    .type(nextType)
+                                    .probability(calculateProbability(transitions.getOrDefault(nextType, 0L)))
+                                    .build())
+                            .filter(prediction -> prediction.probability() > 0);
+                })
+                .toList();
+    }
+
+    @Override
+    public ColorPrediction getNextColorPrediction(Context context) {
+        validateContext(context);
+        return ColorPrediction.builder()
+                .red(PROBABILITY)
+                .black(PROBABILITY)
+                .green(PROBABILITY)
+                .build();
+    }
+
+    private void updateMarkovModel(Context context) {
+        if (context.getSpotHistory().size() < MIN_SIZE) {
+            return;
+        }
+
+        for (int i = 0; i < context.getSpotHistory().size() - 1; i++) {
+            Spot spot1 = context.getSpotHistory().get(i);
+            Spot spot2 = context.getSpotHistory().get(i + 1);
+            spotMap.computeIfAbsent(spot1, k -> new HashMap<>())
+                    .merge(spot2, 1L, Long::sum);
+        }
+
+        for (int i = 0; i < context.getSpotHistory().size() - 1; i++) {
+            Spot spot1 = context.getSpotHistory().get(i);
+            Spot spot2 = context.getSpotHistory().get(i + 1);
+            List<BetType> betTypeList1 = BetType.getAvailableList(context.getRouletteType()).stream()
+                    .filter(type -> BetHelper.isWin(type, spot1))
+                    .toList();
+            List<BetType> betTypeList2 = BetType.getAvailableList(context.getRouletteType()).stream()
+                    .filter(type -> BetHelper.isWin(type, spot2))
+                    .toList();
+
+            for (BetType betType1 : betTypeList1) {
+                for (BetType betType2 : betTypeList2) {
+                    typeMap.computeIfAbsent(betType1, k -> new HashMap<>())
+                            .merge(betType2, 1L, Long::sum);
+                }
+            }
+        }
+        transitions = context.getSpotHistory().size() - 1;
+    }
+
+    private void validateContext(Context context) {
+        Objects.requireNonNull(context, "Context must not be null");
+        Objects.requireNonNull(context.getSpotHistory(), "Spot history must not be null");
+        Objects.requireNonNull(context.getLastSpot(), "Last spot must not be null");
+        Objects.requireNonNull(context.getRouletteType(), "Roulette type must not be null");
+    }
+
+    private double calculateProbability(long occurrences) {
+        return transitions == 0 ? PROBABILITY : (double) occurrences / transitions;
+    }
+
+    public void reset() {
+        spotMap.clear();
+        typeMap.clear();
+        transitions = 0;
+    }
 }

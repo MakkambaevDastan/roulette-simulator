@@ -1,272 +1,123 @@
 package strategy;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.apache.commons.collections4.CollectionUtils;
-
-import application.RouletteContext;
+import application.Context;
 import constants.Configurations;
 import enums.Spot;
 import model.Bet;
 import utils.BetHelper;
 
-/**
- * 戦略のベースクラス.
- *
- * @author cyrus
- */
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
 public abstract class BaseStrategy {
+    protected long curBalance;
+    protected long maxBalance;
+    protected long minBalance;
+    protected long maxTotalBetValue;
+    protected long won;
+    protected long lost;
+    protected long bet;
+    protected long wholeTotalBetValue;
+    protected long wholeTotalPayoutValue;
+    protected final LinkedList<Long> historyBalance;
+    protected List<Bet> lastBets;
+    protected boolean lastLive;
 
-	/**
-	 * 現在の所持金.
-	 */
-	public long currentBalance;
+    public BaseStrategy(Context context) {
+        curBalance = context.getStart();
+        maxBalance = Long.MIN_VALUE;
+        minBalance = Long.MAX_VALUE;
+        maxTotalBetValue = Long.MIN_VALUE;
+        won = 0;
+        lost = 0;
+        bet = 0;
+        wholeTotalBetValue = 0;
+        wholeTotalPayoutValue = 0;
+        historyBalance = new LinkedList<>();
+    }
 
-	/**
-	 * 所持金の最大値.
-	 */
-	public long maximumBalance = Long.MIN_VALUE;
+    public List<Bet> getNext(Context context) {
+        Objects.requireNonNull(context, "Context must not be null");
+        lastBets = isLive() ? getNextInternal(context) : Collections.emptyList();
+        long totalBetValue = BetHelper.getTotalBetValue(lastBets);
+        if (maxTotalBetValue < totalBetValue) {
+            maxTotalBetValue = totalBetValue;
+        }
+        return lastBets;
+    }
 
-	/**
-	 * 所持金の最小値.
-	 */
-	public long minimumBalance = Long.MAX_VALUE;
+    protected abstract List<Bet> getNextInternal(Context context);
 
-	/**
-	 * ベット総額の最大値.
-	 */
-	public long maximumTotalBetValue = Long.MIN_VALUE;
+    public abstract String getName();
 
-	/**
-	 * 当選回数.
-	 */
-	public long wonCount = 0;
+    public long getLastTotalBetValue() {
+        return BetHelper.getTotalBetValue(lastBets);
+    }
 
-	/**
-	 * 負け回数.
-	 */
-	public long lostCount = 0;
+    public void updateStrategyParameter(List<Bet> betList, Spot spot) {
+        if (!betList.isEmpty()) {
+            long currentTotalBetValue = BetHelper.getTotalBetValue(betList);
+            wholeTotalBetValue += currentTotalBetValue;
+            curBalance -= currentTotalBetValue;
 
-	/**
-	 * ベット回数(1箇所以上のベットを行った試行回数).
-	 */
-	public long betCount = 0;
+            long currentTotalPayout = BetHelper.getTotalPayout(betList, spot);
+            wholeTotalPayoutValue += currentTotalPayout;
+            curBalance += currentTotalPayout;
 
-	/**
-	 * 総ベット額.
-	 */
-	public long wholeTotalBetValue = 0;
+            bet++;
+            if (BetHelper.hasWin(betList, spot)) {
+                won++;
+            } else {
+                lost++;
+            }
+        }
+        if (maxBalance < curBalance) {
+            maxBalance = curBalance;
+        }
+        if (curBalance < minBalance) {
+            minBalance = curBalance;
+        }
+        if (lastLive) {
+            historyBalance.offer(curBalance);
+            if (Configurations.BALANCE_HISTORY_SIZE < historyBalance.size()) {
+                historyBalance.poll();
+            }
+        }
+        lastLive = isLive();
+    }
 
-	/**
-	 * 総配当額.
-	 */
-	public long wholeTotalPayoutValue = 0;
+    public boolean isLive() {
+        return 0 < curBalance;
+    }
 
-	/**
-	 * 所持金の履歴(最後の要素が最新).
-	 */
-	public final LinkedList<Long> balanceHistoryList = new LinkedList<>();
+    public double getWinningAverage() {
+        return bet == 0 ? 0 : (double) won / (double) bet;
+    }
 
-	/**
-	 * 前回のベット一覧.
-	 */
-	protected List<Bet> lastBetList;
+    public long getAverageTotalBetValue() {
+        return bet == 0 ? 0 : wholeTotalBetValue / bet;
+    }
 
-	/**
-	 * 前回の有効な戦略かどうかの値.
-	 */
-	protected boolean lastLive;
+    public long getAverageTotalPayoutValue() {
+        return bet == 0 ? 0 : wholeTotalPayoutValue / bet;
+    }
 
-	/**
-	 * 戦略名を取得.
-	 *
-	 * @return
-	 */
-	public abstract String getStrategyName();
+    protected boolean wasLastBetWon(Context context) {
+        return BetHelper.hasWin(lastBets, context.getLastSpot());
+    }
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public BaseStrategy(RouletteContext rouletteContext) {
-		currentBalance = rouletteContext.initialBalance;
-	}
+    protected boolean hasLastBet() {
+        return lastBets != null && !lastBets.isEmpty();
+    }
 
-	/**
-	 * 次のベット一覧を取得.
-	 *
-	 * @param rouletteContext
-	 */
-	public List<Bet> getNextBetList(RouletteContext rouletteContext) {
-		if (isLive()) {
-			// 次のベット一覧を取得
-			lastBetList = getNextBetListImpl(rouletteContext);
-		} else {
-			// ベットなし
-			lastBetList = Collections.emptyList();
-		}
+    public static Comparator<BaseStrategy> getBalanceComparator() {
+        return (o1, o2) -> Long.compare(o2.curBalance, o1.curBalance);
+    }
 
-		// ベット総額の最大値を更新
-		long totalBetValue = BetHelper.getTotalBetValue(lastBetList);
-		if (maximumTotalBetValue < totalBetValue) {
-			maximumTotalBetValue = totalBetValue;
-		}
-
-		return lastBetList;
-	}
-
-	/**
-	 * 次のベット一覧を取得.
-	 *
-	 * @param rouletteContext
-	 */
-	protected abstract List<Bet> getNextBetListImpl(RouletteContext rouletteContext);
-
-	/**
-	 * 前回のベット総額を取得.
-	 *
-	 * @return
-	 */
-	public long getLastTotalBetValue() {
-		return BetHelper.getTotalBetValue(lastBetList);
-	}
-
-	/**
-	 * パラメータを更新.
-	 *
-	 * @param betList
-	 * @param spot
-	 *            最新の出目
-	 */
-	public void updateStrategyParameter(List<Bet> betList, Spot spot) {
-		// ベットが存在する場合
-		if (!betList.isEmpty()) {
-			// 所持金からベット総額を減算
-			long currentTotalBetValue = BetHelper.getTotalBetValue(betList);
-			wholeTotalBetValue += currentTotalBetValue;
-			currentBalance -= currentTotalBetValue;
-
-			// 所持金に配当額を加算
-			long currentTotalPayout = BetHelper.getTotalPayout(betList, spot);
-			wholeTotalPayoutValue += currentTotalPayout;
-			currentBalance += currentTotalPayout;
-
-			// カウントを加算
-			betCount++;
-			if (BetHelper.hasWin(betList, spot)) {
-				// ベットに当選が含まれている場合
-				wonCount++;
-			} else {
-				lostCount++;
-			}
-		}
-
-		// 所持金の最大値、最小値を更新
-		if (maximumBalance < currentBalance) {
-			maximumBalance = currentBalance;
-		}
-		if (currentBalance < minimumBalance) {
-			minimumBalance = currentBalance;
-		}
-
-		// 前回が有効な場合
-		if (lastLive) {
-			// 所持金の履歴を更新
-			balanceHistoryList.offer(currentBalance);
-			if (Configurations.BALANCE_HISTORY_SIZE < balanceHistoryList.size()) {
-				balanceHistoryList.poll();
-			}
-		}
-
-		// 前回の有効な戦略かどうかの値を更新
-		lastLive = isLive();
-	}
-
-	/**
-	 * 有効な戦略(脱落していない)かどうかを取得.<br>
-	 * 所持金が0以下になった場合脱落.
-	 *
-	 * @return
-	 */
-	public boolean isLive() {
-		return 0 < currentBalance;
-	}
-
-	/**
-	 * 勝率を取得.
-	 */
-	public double getWinningAverage() {
-		if (betCount == 0) {
-			return 0;
-		} else {
-			return (double) wonCount / (double) betCount;
-		}
-	}
-
-	/**
-	 * 平均ベット額を取得.
-	 *
-	 * @return
-	 */
-	public long getAverageTotalBetValue() {
-		if (betCount == 0) {
-			return 0;
-		} else {
-			return wholeTotalBetValue / betCount;
-		}
-	}
-
-	/**
-	 * 平均配当額を取得.
-	 *
-	 * @return
-	 */
-	public long getAverageTotalPayoutValue() {
-		if (betCount == 0) {
-			return 0;
-		} else {
-			return wholeTotalPayoutValue / betCount;
-		}
-	}
-
-	/**
-	 * 前回のベットで当選したかどうかを取得.
-	 *
-	 * @param rouletteContext
-	 * @return
-	 */
-	protected boolean wasLastBetWon(RouletteContext rouletteContext) {
-		return BetHelper.hasWin(lastBetList, rouletteContext.getLastSpot());
-	}
-
-	/**
-	 * 前回のベットが存在するかどうかを取得..
-	 *
-	 * @return
-	 */
-	protected boolean hasLastBet() {
-		return CollectionUtils.isNotEmpty(lastBetList);
-	}
-
-	/**
-	 * 現在の所持金の降順にソートするComparatorを取得.
-	 *
-	 * @return
-	 */
-	public static Comparator<BaseStrategy> getBalanceComparator() {
-		return (o1, o2) -> Long.compare(o2.currentBalance, o1.currentBalance);
-	}
-
-	/**
-	 * 戦略名の昇順にソートするComparatorを取得.
-	 *
-	 * @return
-	 */
-	public static Comparator<BaseStrategy> getStrategyNameComparator() {
-		return Comparator.comparing(BaseStrategy::getStrategyName);
-	}
+    public static Comparator<BaseStrategy> getStrategyNameComparator() {
+        return Comparator.comparing(BaseStrategy::getName);
+    }
 }

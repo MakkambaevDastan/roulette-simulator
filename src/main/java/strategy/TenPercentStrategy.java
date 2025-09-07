@@ -1,50 +1,32 @@
 package strategy;
 
-import java.util.Collections;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-/**
- * 10%法(赤のみ).<br>
- * http://www.silversandscasino.jp/strategy/10percent.php
- *
- * @author cyrus
- */
+import java.util.Collections;
+import java.util.List;
+
 public class TenPercentStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
-	private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public TenPercentStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public TenPercentStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "10%法(赤のみ)";
-	}
+    @Override
+    public String getName() {
+        return TenPercentStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 所持金の10%を計算
-		long value = Math.min(currentBalance / 10, rouletteContext.maximumBet);
-
-		// 最小ベット額より大きい場合
-		if (rouletteContext.minimumBet <= value) {
-			return Collections.singletonList(new Bet(USE_BET_TYPE, value));
-		} else {
-			// FIXME 最小ベット額を使用
-			return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-		}
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        long value = Math.min(curBalance / 10, context.getMax());
+        if (context.getMin() <= value) {
+            return Collections.singletonList(Bet.builder().type(TYPE).value(value).build());
+        }
+        // FIXME
+        return Collections.singletonList(Bet.builder().type(TYPE).value(context.getMin()).build());
+    }
 }

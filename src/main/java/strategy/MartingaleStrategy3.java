@@ -1,9 +1,6 @@
 package strategy;
 
-import java.util.Collections;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 import model.ColorPrediction;
@@ -12,65 +9,50 @@ import predictor.CountPredictor2;
 import utils.BetHelper;
 import utils.PredictorHelper;
 
-/**
- * マーチンゲール法(予測器を使用).
- *
- * @author cyrus
- */
+import java.util.Collections;
+import java.util.List;
+
+import static enums.BetType.BLACK;
+import static enums.BetType.RED;
+
 public class MartingaleStrategy3 extends BaseStrategy {
 
-	/**
-	 * 使用する予測器.
-	 */
-	private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(CountPredictor2.class);
+    private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(CountPredictor2.class);
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public MartingaleStrategy3(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public MartingaleStrategy3(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "マーチンゲール法(予測器を使用)";
-	}
+    @Override
+    public String getName() {
+        return MartingaleStrategy3.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 次の出目の色の予測を取得
-		ColorPrediction colorPrediction = PREDICTOR.getNextColorPrediction(rouletteContext);
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        ColorPrediction colorPrediction = PREDICTOR.getNextColorPrediction(context);
+        BetType type = colorPrediction.black() <= colorPrediction.red() ? RED : BLACK;
 
-		// 使用するベットの種類を選択
-		BetType useBetType;
-		if (colorPrediction.blackProbability <= colorPrediction.redProbability) {
-			useBetType = BetType.RED;
-		} else {
-			useBetType = BetType.BLACK;
-		}
+        boolean wonLastBet = false;
+        long lastBetValue = 0;
+        if (lastBets != null) {
+            lastBetValue = BetHelper.getTotalBetValue(lastBets);
+            for (Bet bet : lastBets) {
+                if (BetHelper.isWin(bet, context.getLastSpot())) {
+                    wonLastBet = true;
+                }
+            }
+        }
 
-		// 前回のベットで当選したかを取得
-		boolean wonLastBet = false;
-		long lastBetValue = 0;
-		if (lastBetList != null) {
-			lastBetValue = BetHelper.getTotalBetValue(lastBetList);
-			for (Bet bet : lastBetList) {
-				if (BetHelper.isWin(bet, rouletteContext.getLastSpot())) {
-					wonLastBet = true;
-				}
-			}
-		}
+        if (wonLastBet) {
+            return create(type, context.getMin());
+        } else {
+            // FIXME
+            return create(type, (lastBetValue * 2));
+        }
+    }
 
-		// 前回当選した場合
-		if (wonLastBet) {
-			// 最小ベット額をベット
-			return Collections.singletonList(new Bet(useBetType, rouletteContext.minimumBet));
-		} else {
-			// 前回のベット額の倍額をベット
-			// FIXME 最大ベット額を考慮
-			return Collections.singletonList(new Bet(useBetType, (lastBetValue * 2)));
-		}
-	}
+    private List<Bet> create(BetType type, long value) {
+        return Collections.singletonList(Bet.builder().type(type).value(value).build());
+    }
 }

@@ -1,54 +1,40 @@
 package strategy;
 
-import java.util.Collections;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
 import model.Bet;
 
-/**
- * イーストコーストプログレッション(赤のみ).<br>
- * http://www.silversandscasino.jp/strategy/east_coast.php
- *
- * @author cyrus
- */
+import java.util.Collections;
+import java.util.List;
+
 public class EastCoastProgressionStrategy extends BaseStrategy {
 
-	/**
-	 * 使用するベットの種類.
-	 */
-	private static final BetType USE_BET_TYPE = BetType.RED;
+    private static final BetType TYPE = BetType.RED;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public EastCoastProgressionStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public EastCoastProgressionStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "イーストコーストプログレッション(赤のみ)";
-	}
+    @Override
+    public String getName() {
+        return EastCoastProgressionStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		// 前回当選した場合
-		if (wasLastBetWon(rouletteContext)) {
-			// 差額の半分をベット
-			long betValue = (currentBalance - rouletteContext.initialBalance) / 2;
-			if (0 < betValue) {
-				return Collections.singletonList(new Bet(USE_BET_TYPE, betValue));
-			} else {
-				// TODO
-				return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet));
-			}
-		} else {
-			// 最小値の2倍
-			return Collections.singletonList(new Bet(USE_BET_TYPE, rouletteContext.minimumBet * 2));
-		}
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        if (wasLastBetWon(context)) {
+            long value = (curBalance - context.getStart()) / 2;
+            if (0 < value) {
+                return create(value);
+            } else {
+                // TODO
+                return create(context.getMin());
+            }
+        }
+        return create(context.getMin() * 2);
+    }
+
+    private List<Bet> create(long value) {
+        return Collections.singletonList(Bet.builder().type(TYPE).value(value).build());
+    }
 }

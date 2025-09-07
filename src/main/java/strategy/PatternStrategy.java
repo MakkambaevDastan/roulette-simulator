@@ -1,11 +1,7 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import enums.BetType;
-import enums.Spot;
 import model.Bet;
 import model.SpotPrediction;
 import predictor.BasePredictor;
@@ -13,94 +9,70 @@ import predictor.PatternPredictor;
 import utils.BetHelper;
 import utils.PredictorHelper;
 
-/**
- * パターン分析戦略(予測器を使用).
- * 過去の出目のパターンを分析して次の出目を予測し、複数の高確率出目にベットする.
- *
- * @author cyrus
- */
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+
 public class PatternStrategy extends BaseStrategy {
 
-	/**
-	 * 使用する予測器.
-	 */
-	private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(PatternPredictor.class);
+    private static final BasePredictor PREDICTOR = PredictorHelper.getInstance(PatternPredictor.class);
+    private static final double PROBABILITY_THRESHOLD = 0.02;
+    private static final int MAX_BETS = 5;
+    private static final double BUDGET_FRACTION = 0.1;
+    private static final double VALUE_MULTIPLIER = 2.0;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public PatternStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public PatternStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "パターン分析戦略(予測器を使用)";
-	}
+    @Override
+    public String getName() {
+        return PatternStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		List<Bet> betList = new ArrayList<>();
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        Objects.requireNonNull(PREDICTOR, "Predictor must not be null");
+        if (curBalance < 0) {
+            throw new IllegalStateException("Current balance cannot be negative: " + curBalance);
+        }
+        long totalBudget = (long) Math.min(
+                Math.max(curBalance, context.getStart()) * BUDGET_FRACTION,
+                context.getMax()
+        );
+        if (totalBudget < context.getMin()) {
+            return List.of();
+        }
+        List<SpotPrediction> predictions = PREDICTOR.getNextSpotPredictionList(context);
+        if (predictions.isEmpty()) {
+            return List.of();
+        }
 
-		// ベットに使用する金額を取得（所持金の10%を基準）
-		long totalBudget = currentBalance / 10;
-		if (totalBudget <= 0) {
-			totalBudget = rouletteContext.initialBalance / 10;
-		}
-		if (rouletteContext.maximumBet < totalBudget) {
-			totalBudget = rouletteContext.maximumBet;
-		}
-
-		// 予測一覧を取得し、確率の高い順にソート
-		List<SpotPrediction> spotPredictions = PREDICTOR.getNextSpotPredictionList(rouletteContext);
-		spotPredictions.sort((a, b) -> Double.compare(b.probability, a.probability));
-
-		// 確率の閾値を設定（上位の予測のみを対象とする）
-		double probabilityThreshold = 0.02; // 2%以上の確率
-		long usedBudget = 0;
-		int maxBets = 5; // 最大5つの出目にベット
-		int betCount = 0;
-
-		for (SpotPrediction spotPrediction : spotPredictions) {
-			if (betCount >= maxBets || usedBudget >= totalBudget) {
-				break;
-			}
-
-			if (spotPrediction.probability >= probabilityThreshold) {
-				// 確率に応じてベット額を調整
-				long betValue = Math.max(
-					rouletteContext.minimumBet,
-					(long) (totalBudget * spotPrediction.probability * 2) // 確率の2倍を係数として使用
-				);
-
-				// 予算の範囲内に調整
-				if (usedBudget + betValue > totalBudget) {
-					betValue = totalBudget - usedBudget;
-				}
-
-				if (betValue >= rouletteContext.minimumBet) {
-					// ストレートアップベットを作成
-					BetType useBetType = BetHelper.getStraightUpBetType(spotPrediction.spot);
-					if (useBetType != null) {
-						betList.add(new Bet(useBetType, betValue));
-						usedBudget += betValue;
-						betCount++;
-					}
-				}
-			}
-		}
-
-		// 高確率の予測がない場合は、最も確率の高い出目に最小ベット
-		if (betList.isEmpty() && !spotPredictions.isEmpty()) {
-			SpotPrediction bestPrediction = spotPredictions.get(0);
-			BetType useBetType = BetHelper.getStraightUpBetType(bestPrediction.spot);
-			if (useBetType != null) {
-				betList.add(new Bet(useBetType, rouletteContext.minimumBet));
-			}
-		}
-
-		return betList;
-	}
+        AtomicLong usedBudget = new AtomicLong(0);
+        List<Bet> bets = predictions.stream()
+                .sorted(Comparator.comparingDouble(SpotPrediction::probability).reversed())
+                .filter(prediction -> prediction.probability() >= PROBABILITY_THRESHOLD)
+                .limit(MAX_BETS)
+                .map(prediction -> {
+                    long value = Math.max(context.getMin(), (long) (totalBudget * prediction.probability() * VALUE_MULTIPLIER));
+                    value = Math.min(value, totalBudget - usedBudget.get());
+                    BetType type = BetHelper.getStraightUpBetType(prediction.spot());
+                    if (type != null && value >= context.getMin()) {
+                        usedBudget.addAndGet(value);
+                        return Bet.builder().type(type).value(value).build();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .takeWhile(bet -> usedBudget.get() <= totalBudget)
+                .toList();
+        if (bets.isEmpty()) {
+            BetType type = BetHelper.getStraightUpBetType(predictions.getFirst().spot());
+            if (type != null) {
+                return List.of(Bet.builder().type(type).value(context.getMin()).build());
+            }
+        }
+        return bets;
+    }
 }

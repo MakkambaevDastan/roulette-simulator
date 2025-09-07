@@ -1,39 +1,27 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import model.Bet;
 
-/**
- * マンシュリアン法.<br>
- * https://casino-kingdom.com/mansurians/
- *
- * @author cyrus
- */
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class MansuriansStrategy extends BaseStrategy {
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public MansuriansStrategy(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public MansuriansStrategy(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "マンシュリアン法";
-	}
+    @Override
+    public String getName() {
+        return MansuriansStrategy.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		List<Bet> betList = new ArrayList<>();
-
-		// TODO
-
-		return betList;
-	}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        List<Bet> betList = new ArrayList<>();
+        // TODO
+        return betList;
+    }
 }

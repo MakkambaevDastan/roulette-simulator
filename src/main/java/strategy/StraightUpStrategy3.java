@@ -1,62 +1,53 @@
 package strategy;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
+import enums.BetType;
 import enums.Spot;
 import model.Bet;
 import utils.BetHelper;
 
-/**
- * ストレート複数賭け2.<br>
- * http://casino55.blog85.fc2.com/blog-entry-15.html
- *
- * @author cyrus
- */
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class StraightUpStrategy3 extends BaseStrategy {
 
-	/**
-	 * 連続して当選した回数.
-	 */
-	private int count = 0;
+    private int count = 0;
 
-	/**
-	 * コンストラクタ.
-	 *
-	 * @param rouletteContext
-	 */
-	public StraightUpStrategy3(RouletteContext rouletteContext) {
-		super(rouletteContext);
-	}
+    public StraightUpStrategy3(Context context) {
+        super(context);
+    }
 
-	@Override
-	public String getStrategyName() {
-		return "ストレート複数賭け2";
-	}
+    @Override
+    public String getName() {
+        return StraightUpStrategy3.class.getSimpleName();
+    }
 
-	@Override
-	public List<Bet> getNextBetListImpl(RouletteContext rouletteContext) {
-		List<Bet> betList = new ArrayList<>();
 
-		// 前回当選の場合
-		if (wasLastBetWon(rouletteContext)) {
-			count++;
-		} else {
-			count = 0;
-		}
+    @Override
+    public List<Bet> getNextInternal(Context context) {
+        count = wasLastBetWon(context) ? count + 1 : 0;
 
-		// 全てので目に対して実行
-		LOOP1: for (Spot spot : Spot.getAvailableList(rouletteContext.rouletteType)) {
-			// 直近に出現していない出目にストレートでベットする
-			for (int i = 0; i < Math.min(rouletteContext.spotHistoryList.size(), count); i++) {
-				if (spot == rouletteContext.spotHistoryList.get(rouletteContext.spotHistoryList.size() - (i + 1))) {
-					continue LOOP1;
-				}
-			}
-			betList.add(new Bet(BetHelper.getStraightUpBetType(spot), rouletteContext.minimumBet));
-		}
+        List<Spot> spotHistory = context.getSpotHistory();
+        Set<Spot> excludedSpots = new HashSet<>(spotHistory.subList(
+                Math.max(0, spotHistory.size() - count),
+                spotHistory.size()
+        ));
 
-		return betList;
-	}
+        List<Spot> availableSpots = Spot.getAvailableList(context.getRouletteType());
+
+        return availableSpots.stream()
+                .filter(spot -> !excludedSpots.contains(spot))
+                .map(spot -> {
+                    BetType type = BetHelper.getStraightUpBetType(spot);
+                    return Bet.builder()
+                            .type(type)
+                            .value(context.getMin())
+                            .build();
+                })
+                .toList();
+    }
 }

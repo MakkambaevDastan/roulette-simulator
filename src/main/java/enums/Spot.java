@@ -1,613 +1,305 @@
 package enums;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import application.RouletteContext;
+import application.Context;
 import constants.Configurations;
+import lombok.Getter;
 
-/**
- * 出目.
- *
- * @author cyrus
- */
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public enum Spot {
-	SPOT_0, SPOT_00, SPOT_01, SPOT_02, SPOT_03, SPOT_04, SPOT_05, SPOT_06, SPOT_07, SPOT_08, SPOT_09, SPOT_10, SPOT_11, SPOT_12, SPOT_13, SPOT_14, SPOT_15, SPOT_16, SPOT_17, SPOT_18, SPOT_19, SPOT_20, SPOT_21, SPOT_22, SPOT_23, SPOT_24, SPOT_25, SPOT_26, SPOT_27, SPOT_28, SPOT_29, SPOT_30, SPOT_31, SPOT_32, SPOT_33, SPOT_34, SPOT_35, SPOT_36;
+    SPOT_0(0, SpotColor.GREEN),
+    SPOT_00(-1, SpotColor.GREEN),
+    SPOT_01(1, SpotColor.RED),
+    SPOT_02(2, SpotColor.BLACK),
+    SPOT_03(3, SpotColor.RED),
+    SPOT_04(4, SpotColor.BLACK),
+    SPOT_05(5, SpotColor.RED),
+    SPOT_06(6, SpotColor.BLACK),
+    SPOT_07(7, SpotColor.RED),
+    SPOT_08(8, SpotColor.BLACK),
+    SPOT_09(9, SpotColor.RED),
+    SPOT_10(10, SpotColor.BLACK),
+    SPOT_11(11, SpotColor.BLACK),
+    SPOT_12(12, SpotColor.RED),
+    SPOT_13(13, SpotColor.BLACK),
+    SPOT_14(14, SpotColor.RED),
+    SPOT_15(15, SpotColor.BLACK),
+    SPOT_16(16, SpotColor.RED),
+    SPOT_17(17, SpotColor.BLACK),
+    SPOT_18(18, SpotColor.RED),
+    SPOT_19(19, SpotColor.RED),
+    SPOT_20(20, SpotColor.BLACK),
+    SPOT_21(21, SpotColor.RED),
+    SPOT_22(22, SpotColor.BLACK),
+    SPOT_23(23, SpotColor.RED),
+    SPOT_24(24, SpotColor.BLACK),
+    SPOT_25(25, SpotColor.RED),
+    SPOT_26(26, SpotColor.BLACK),
+    SPOT_27(27, SpotColor.RED),
+    SPOT_28(28, SpotColor.BLACK),
+    SPOT_29(29, SpotColor.BLACK),
+    SPOT_30(30, SpotColor.RED),
+    SPOT_31(31, SpotColor.BLACK),
+    SPOT_32(32, SpotColor.RED),
+    SPOT_33(33, SpotColor.BLACK),
+    SPOT_34(34, SpotColor.RED),
+    SPOT_35(35, SpotColor.BLACK),
+    SPOT_36(36, SpotColor.RED);
 
-	/**
-	 * 1-36ルーレットのホイール配置(0と00を除く).<br>
-	 * 1から36まで順番に配置.
-	 */
-	private static final Spot[] ONE_TO_36_WHEEL = {
-			SPOT_01, SPOT_02, SPOT_03, SPOT_04, SPOT_05, SPOT_06, SPOT_07, SPOT_08, SPOT_09,
-			SPOT_10, SPOT_11, SPOT_12, SPOT_13, SPOT_14, SPOT_15, SPOT_16, SPOT_17, SPOT_18,
-			SPOT_19, SPOT_20, SPOT_21, SPOT_22, SPOT_23, SPOT_24, SPOT_25, SPOT_26, SPOT_27,
-			SPOT_28, SPOT_29, SPOT_30, SPOT_31, SPOT_32, SPOT_33, SPOT_34, SPOT_35, SPOT_36
-	};
+    @Getter
+    private final int number;
+    private final SpotColor color;
 
-	/**
-	 * ヨーロピアンルーレットのホイール配置.
-	 */
-	private static final Spot[] EUROPEAN_WHEEL = {
-			SPOT_0, SPOT_32, SPOT_15, SPOT_19, SPOT_04, SPOT_21, SPOT_02, SPOT_25,
-			SPOT_17, SPOT_34, SPOT_06, SPOT_27, SPOT_13, SPOT_36, SPOT_11, SPOT_30, SPOT_08,
-			SPOT_23, SPOT_10, SPOT_05, SPOT_24, SPOT_16, SPOT_33, SPOT_01, SPOT_20, SPOT_14,
-			SPOT_31, SPOT_09, SPOT_22, SPOT_18, SPOT_29, SPOT_07, SPOT_28, SPOT_12, SPOT_35,
-			SPOT_03, SPOT_26
-	};
+    Spot(int number, SpotColor color) {
+        this.number = number;
+        this.color = color;
+    }
 
-	/**
-	 * アメリカンルーレットのホイール配置.
-	 */
-	private static final Spot[] AMERICAN_WHEEL = {
-			SPOT_0, SPOT_28, SPOT_09, SPOT_26, SPOT_30, SPOT_11, SPOT_07, SPOT_20, SPOT_32, SPOT_17,
-			SPOT_05, SPOT_22, SPOT_34, SPOT_15, SPOT_03, SPOT_24, SPOT_36, SPOT_13, SPOT_01, SPOT_00,
-			SPOT_27, SPOT_10, SPOT_25, SPOT_29, SPOT_12, SPOT_08, SPOT_19, SPOT_31, SPOT_18, SPOT_06,
-			SPOT_21, SPOT_33, SPOT_16, SPOT_04, SPOT_23, SPOT_35, SPOT_14, SPOT_02
-	};
+    public static final Set<Spot> REDS;
+    public static final Set<Spot> BLACKS;
+    public static final Set<Spot> GREENS;
+    public static final Set<Spot> EVENS;
+    public static final Set<Spot> ODDS;
+    public static final Set<Spot> LOW_SPOTS;
+    public static final Set<Spot> HIGH_SPOTS;
+    public static final Set<Spot> FIRST_DOZEN_SPOTS;
+    public static final Set<Spot> SECOND_DOZEN_SPOTS;
+    public static final Set<Spot> THIRD_DOZEN_SPOTS;
+    public static final Set<Spot> FIRST_COLUMN_SPOTS;
+    public static final Set<Spot> SECOND_COLUMN_SPOTS;
+    public static final Set<Spot> THIRD_COLUMN_SPOTS;
 
-	/**
-	 * 数値から出目を取得.
-	 *
-	 * @param number
-	 * @return
-	 */
-	public static Spot getByNumber(int number) {
-		for (Spot spot : values()) {
-			if (number == spot.getNumber()) {
-				return spot;
-			}
-		}
-		throw new IllegalArgumentException();
-	}
+    private static final Set<Spot> FIRST_DOZEN_OR_ZERO_SPOTS;
 
-	/**
-	 * 有効な出目一覧を取得.
-	 *
-	 * @param rouletteType
-	 * @return
-	 */
-	public static List<Spot> getAvailableList(RouletteType rouletteType) {
-		List<Spot> availableSpotList = new ArrayList<>();
-		for (Spot spot : values()) {
-			if ((rouletteType == RouletteType.ONE_TO_36 && (spot == SPOT_0 || spot == SPOT_00))
-					|| (rouletteType == RouletteType.EUROPEAN_STYLE && spot == SPOT_00)) {
-				continue;
-			}
-			availableSpotList.add(spot);
-		}
-		return availableSpotList;
-	}
+    private static final Map<Integer, Spot> SPOT_BY_NUMBER =
+            Arrays.stream(values()).collect(Collectors.toUnmodifiableMap(Spot::getNumber, s -> s));
+    private static final Map<RouletteType, List<Spot>> AVAILABLE_SPOTS_CACHE =
+            new EnumMap<>(RouletteType.class);
+    private static final Map<RouletteType, Spot[]> WHEEL_LAYOUTS = new EnumMap<>(RouletteType.class);
+    private static final Map<RouletteType, Map<Spot, Integer>> WHEEL_POSITIONS_CACHE = new EnumMap<>(RouletteType.class);
 
-	/**
-	 * 次の出目を取得.
-	 *
-	 * @param rouletteContext
-	 * @return
-	 */
-	public static Spot getRandomNextSpot(RouletteContext rouletteContext) {
-		List<Spot> availableSpotList = getAvailableList(rouletteContext.rouletteType);
-		switch (rouletteContext.spotGenerateType) {
-		case RANDOM:
-			return availableSpotList.get(Configurations.RANDOM.nextInt(availableSpotList.size()));
-		case ROTATION_NUMBER:
-			return availableSpotList.get((int) (rouletteContext.currentLoopCount % availableSpotList.size()));
-		case ROTATION_WHEEL:
-			switch (rouletteContext.rouletteType) {
-			case ONE_TO_36:
-				return ONE_TO_36_WHEEL[((int) (rouletteContext.currentLoopCount % ONE_TO_36_WHEEL.length))];
-			case EUROPEAN_STYLE:
-				return EUROPEAN_WHEEL[((int) (rouletteContext.currentLoopCount % EUROPEAN_WHEEL.length))];
-			case AMERICAN_STYLE:
-				return AMERICAN_WHEEL[((int) (rouletteContext.currentLoopCount % AMERICAN_WHEEL.length))];
-			default:
-				throw new IllegalArgumentException();
-			}
-		case RANDOM_RED_ONLY: {
-			while (true) {
-				Spot spot = availableSpotList.get(Configurations.RANDOM.nextInt(availableSpotList.size()));
-				if (spot.isRed()) {
-					return spot;
-				}
-			}
-		}
-		case RANDOM_BLACK_ONLY: {
-			while (true) {
-				Spot spot = availableSpotList.get(Configurations.RANDOM.nextInt(availableSpotList.size()));
-				if (spot.isBlack()) {
-					return spot;
-				}
-			}
-		}
-		case RANDOM_EXCEPT_ONE:
-			while (true) {
-				Spot spot = availableSpotList.get(Configurations.RANDOM.nextInt(availableSpotList.size()));
-				if (spot != SPOT_01) {
-					return spot;
-				}
-			}
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
+    static {
+        WHEEL_LAYOUTS.put(RouletteType.ONE_TO_36, new Spot[]{
+                SPOT_01, SPOT_02, SPOT_03, SPOT_04, SPOT_05, SPOT_06, SPOT_07, SPOT_08, SPOT_09,
+                SPOT_10, SPOT_11, SPOT_12, SPOT_13, SPOT_14, SPOT_15, SPOT_16, SPOT_17, SPOT_18,
+                SPOT_19, SPOT_20, SPOT_21, SPOT_22, SPOT_23, SPOT_24, SPOT_25, SPOT_26, SPOT_27,
+                SPOT_28, SPOT_29, SPOT_30, SPOT_31, SPOT_32, SPOT_33, SPOT_34, SPOT_35, SPOT_36
+        });
+        WHEEL_LAYOUTS.put(RouletteType.EUROPEAN_STYLE, new Spot[]{
+                SPOT_0, SPOT_32, SPOT_15, SPOT_19, SPOT_04, SPOT_21, SPOT_02, SPOT_25,
+                SPOT_17, SPOT_34, SPOT_06, SPOT_27, SPOT_13, SPOT_36, SPOT_11, SPOT_30, SPOT_08,
+                SPOT_23, SPOT_10, SPOT_05, SPOT_24, SPOT_16, SPOT_33, SPOT_01, SPOT_20, SPOT_14,
+                SPOT_31, SPOT_09, SPOT_22, SPOT_18, SPOT_29, SPOT_07, SPOT_28, SPOT_12, SPOT_35,
+                SPOT_03, SPOT_26
+        });
+        WHEEL_LAYOUTS.put(RouletteType.AMERICAN_STYLE, new Spot[]{
+                SPOT_0, SPOT_28, SPOT_09, SPOT_26, SPOT_30, SPOT_11, SPOT_07, SPOT_20, SPOT_32, SPOT_17,
+                SPOT_05, SPOT_22, SPOT_34, SPOT_15, SPOT_03, SPOT_24, SPOT_36, SPOT_13, SPOT_01, SPOT_00,
+                SPOT_27, SPOT_10, SPOT_25, SPOT_29, SPOT_12, SPOT_08, SPOT_19, SPOT_31, SPOT_18, SPOT_06,
+                SPOT_21, SPOT_33, SPOT_16, SPOT_04, SPOT_23, SPOT_35, SPOT_14, SPOT_02
+        });
 
-	/**
-	 * 出目の数値を取得(0=0、00=-1).
-	 *
-	 * @return
-	 */
-	public int getNumber() {
-		switch (this) {
-		case SPOT_0:
-			return 0;
-		case SPOT_00:
-			return -1;
-		case SPOT_01:
-			return 1;
-		case SPOT_02:
-			return 2;
-		case SPOT_03:
-			return 3;
-		case SPOT_04:
-			return 4;
-		case SPOT_05:
-			return 5;
-		case SPOT_06:
-			return 6;
-		case SPOT_07:
-			return 7;
-		case SPOT_08:
-			return 8;
-		case SPOT_09:
-			return 9;
-		case SPOT_10:
-			return 10;
-		case SPOT_11:
-			return 11;
-		case SPOT_12:
-			return 12;
-		case SPOT_13:
-			return 13;
-		case SPOT_14:
-			return 14;
-		case SPOT_15:
-			return 15;
-		case SPOT_16:
-			return 16;
-		case SPOT_17:
-			return 17;
-		case SPOT_18:
-			return 18;
-		case SPOT_19:
-			return 19;
-		case SPOT_20:
-			return 20;
-		case SPOT_21:
-			return 21;
-		case SPOT_22:
-			return 22;
-		case SPOT_23:
-			return 23;
-		case SPOT_24:
-			return 24;
-		case SPOT_25:
-			return 25;
-		case SPOT_26:
-			return 26;
-		case SPOT_27:
-			return 27;
-		case SPOT_28:
-			return 28;
-		case SPOT_29:
-			return 29;
-		case SPOT_30:
-			return 30;
-		case SPOT_31:
-			return 31;
-		case SPOT_32:
-			return 32;
-		case SPOT_33:
-			return 33;
-		case SPOT_34:
-			return 34;
-		case SPOT_35:
-			return 35;
-		case SPOT_36:
-			return 36;
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
+        for (RouletteType type : RouletteType.values()) {
+            AVAILABLE_SPOTS_CACHE.put(type, getAvailableSpotsUncached(type));
+            Spot[] layout = WHEEL_LAYOUTS.get(type);
+            if (layout != null) {
+                Map<Spot, Integer> positions = new HashMap<>();
+                for (int i = 0; i < layout.length; i++) {
+                    positions.put(layout[i], i);
+                }
+                WHEEL_POSITIONS_CACHE.put(type, Collections.unmodifiableMap(positions));
+            }
+        }
 
-	/**
-	 * 赤であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isRed() {
-		switch (this) {
-		case SPOT_01:
-		case SPOT_03:
-		case SPOT_05:
-		case SPOT_07:
-		case SPOT_09:
-		case SPOT_12:
-		case SPOT_14:
-		case SPOT_16:
-		case SPOT_18:
-		case SPOT_19:
-		case SPOT_21:
-		case SPOT_23:
-		case SPOT_25:
-		case SPOT_27:
-		case SPOT_30:
-		case SPOT_32:
-		case SPOT_34:
-		case SPOT_36:
-			return true;
-		default:
-			return false;
-		}
-	}
+        EnumSet<Spot> reds = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> blacks = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> greens = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> evens = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> odds = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> lows = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> highs = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> firstDozen = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> secondDozen = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> thirdDozen = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> firstColumn = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> secondColumn = EnumSet.noneOf(Spot.class);
+        EnumSet<Spot> thirdColumn = EnumSet.noneOf(Spot.class);
 
-	/**
-	 * 黒であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isBlack() {
-		switch (this) {
-		case SPOT_02:
-		case SPOT_04:
-		case SPOT_06:
-		case SPOT_08:
-		case SPOT_10:
-		case SPOT_11:
-		case SPOT_13:
-		case SPOT_15:
-		case SPOT_17:
-		case SPOT_20:
-		case SPOT_22:
-		case SPOT_24:
-		case SPOT_26:
-		case SPOT_28:
-		case SPOT_29:
-		case SPOT_31:
-		case SPOT_33:
-		case SPOT_35:
-			return true;
-		default:
-			return false;
-		}
-	}
+        for (Spot spot : values()) {
+            if (spot.isRed()) reds.add(spot);
+            if (spot.isBlack()) blacks.add(spot);
+            if (spot.isGreen()) greens.add(spot);
+            if (spot.isEven()) evens.add(spot);
+            if (spot.isOdd()) odds.add(spot);
+            if (spot.is1To18()) lows.add(spot);
+            if (spot.is19To36()) highs.add(spot);
+            if (spot.isFirstDozen()) firstDozen.add(spot);
+            if (spot.isSecondDozen()) secondDozen.add(spot);
+            if (spot.isThirdDozen()) thirdDozen.add(spot);
+            if (spot.isFirstColumn()) firstColumn.add(spot);
+            if (spot.isSecondColumn()) secondColumn.add(spot);
+            if (spot.isThirdColumn()) thirdColumn.add(spot);
+        }
 
-	/**
-	 * 緑であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isGreen() {
-		return !isRed() && !isBlack();
-	}
+        REDS = Collections.unmodifiableSet(reds);
+        BLACKS = Collections.unmodifiableSet(blacks);
+        GREENS = Collections.unmodifiableSet(greens);
+        EVENS = Collections.unmodifiableSet(evens);
+        ODDS = Collections.unmodifiableSet(odds);
+        LOW_SPOTS = Collections.unmodifiableSet(lows);
+        HIGH_SPOTS = Collections.unmodifiableSet(highs);
+        FIRST_DOZEN_SPOTS = Collections.unmodifiableSet(firstDozen);
+        SECOND_DOZEN_SPOTS = Collections.unmodifiableSet(secondDozen);
+        THIRD_DOZEN_SPOTS = Collections.unmodifiableSet(thirdDozen);
+        FIRST_COLUMN_SPOTS = Collections.unmodifiableSet(firstColumn);
+        SECOND_COLUMN_SPOTS = Collections.unmodifiableSet(secondColumn);
+        THIRD_COLUMN_SPOTS = Collections.unmodifiableSet(thirdColumn);
 
-	/**
-	 * 偶数であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isEven() {
-		switch (this) {
-		case SPOT_02:
-		case SPOT_04:
-		case SPOT_06:
-		case SPOT_08:
-		case SPOT_10:
-		case SPOT_12:
-		case SPOT_14:
-		case SPOT_16:
-		case SPOT_18:
-		case SPOT_20:
-		case SPOT_22:
-		case SPOT_24:
-		case SPOT_26:
-		case SPOT_28:
-		case SPOT_30:
-		case SPOT_32:
-		case SPOT_34:
-		case SPOT_36:
-			return true;
-		default:
-			return false;
-		}
-	}
+        FIRST_DOZEN_OR_ZERO_SPOTS =
+                Collections.unmodifiableSet(EnumSet.of(
+                        SPOT_0, SPOT_00, SPOT_01, SPOT_02, SPOT_03, SPOT_04,
+                        SPOT_05, SPOT_06, SPOT_07, SPOT_08, SPOT_09, SPOT_10,
+                        SPOT_11, SPOT_12
+                ));
+    }
 
-	/**
-	 * 奇数であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isOdd() {
-		switch (this) {
-		case SPOT_01:
-		case SPOT_03:
-		case SPOT_05:
-		case SPOT_07:
-		case SPOT_09:
-		case SPOT_11:
-		case SPOT_13:
-		case SPOT_15:
-		case SPOT_17:
-		case SPOT_19:
-		case SPOT_21:
-		case SPOT_23:
-		case SPOT_25:
-		case SPOT_27:
-		case SPOT_29:
-		case SPOT_31:
-		case SPOT_33:
-		case SPOT_35:
-			return true;
-		default:
-			return false;
-		}
-	}
+    public static Spot getByNumber(int number) {
+        Spot spot = SPOT_BY_NUMBER.get(number);
+        if (spot == null) {
+            throw new IllegalArgumentException("Не существует номера: " + number);
+        }
+        return spot;
+    }
 
-	/**
-	 * 1stダズンまたは0、00であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isFirstDozenOrZeroAndDoubleZero() {
-		switch (this) {
-		case SPOT_0:
-		case SPOT_00:
-		case SPOT_01:
-		case SPOT_02:
-		case SPOT_03:
-		case SPOT_04:
-		case SPOT_05:
-		case SPOT_06:
-		case SPOT_07:
-		case SPOT_08:
-		case SPOT_09:
-		case SPOT_10:
-		case SPOT_11:
-		case SPOT_12:
-			return true;
-		default:
-			return false;
-		}
-	}
+    private static List<Spot> getAvailableSpotsUncached(RouletteType rouletteType) {
+        Stream<Spot> stream = Arrays.stream(values());
+        if (rouletteType == RouletteType.ONE_TO_36) {
+            stream = stream.filter(s -> s != SPOT_0 && s != SPOT_00);
+        } else if (rouletteType == RouletteType.EUROPEAN_STYLE) {
+            stream = stream.filter(s -> s != SPOT_00);
+        }
+        return stream.toList();
+    }
 
-	/**
-	 * 1stダズンであるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isFirstDozen() {
-		switch (this) {
-		case SPOT_01:
-		case SPOT_02:
-		case SPOT_03:
-		case SPOT_04:
-		case SPOT_05:
-		case SPOT_06:
-		case SPOT_07:
-		case SPOT_08:
-		case SPOT_09:
-		case SPOT_10:
-		case SPOT_11:
-		case SPOT_12:
-			return true;
-		default:
-			return false;
-		}
-	}
+    public static List<Spot> getAvailableList(RouletteType rouletteType) {
+        return AVAILABLE_SPOTS_CACHE.getOrDefault(rouletteType, Collections.emptyList());
+    }
 
-	/**
-	 * 2ndダズンであるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isSecondDozen() {
-		switch (this) {
-		case SPOT_13:
-		case SPOT_14:
-		case SPOT_15:
-		case SPOT_16:
-		case SPOT_17:
-		case SPOT_18:
-		case SPOT_19:
-		case SPOT_20:
-		case SPOT_21:
-		case SPOT_22:
-		case SPOT_23:
-		case SPOT_24:
-			return true;
-		default:
-			return false;
-		}
-	}
+    public static Spot getRandomNextSpot(Context context) {
+        List<Spot> availableSpots = getAvailableList(context.getRouletteType());
+        return switch (context.getSpotGenerateType()) {
+            case RANDOM -> getRandomSpotFromList(availableSpots);
+            case ROTATION_NUMBER -> availableSpots.get((int) (context.getCurrentLoopCount() % availableSpots.size()));
+            case ROTATION_WHEEL -> {
+                Spot[] wheel = WHEEL_LAYOUTS.get(context.getRouletteType());
+                yield wheel[(int) (context.getCurrentLoopCount() % wheel.length)];
+            }
+            case RANDOM_RED_ONLY -> getRandomSpotFromIntersection(availableSpots, REDS);
+            case RANDOM_BLACK_ONLY -> getRandomSpotFromIntersection(availableSpots, BLACKS);
+            case RANDOM_EXCEPT_ONE -> getRandomSpotWithFilter(availableSpots, s -> s != SPOT_01);
+        };
+    }
 
-	/**
-	 * 3rdダズンであるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isThirdDozen() {
-		switch (this) {
-		case SPOT_25:
-		case SPOT_26:
-		case SPOT_27:
-		case SPOT_28:
-		case SPOT_29:
-		case SPOT_30:
-		case SPOT_31:
-		case SPOT_32:
-		case SPOT_33:
-		case SPOT_34:
-		case SPOT_35:
-		case SPOT_36:
-			return true;
-		default:
-			return false;
-		}
-	}
+    private static Spot getRandomSpotFromList(List<Spot> spots) {
+        if (spots == null || spots.isEmpty()) {
+            throw new IllegalStateException("Невозможно выбрать случайное поле из пустого списка.");
+        }
+        return spots.get(Configurations.RANDOM.nextInt(spots.size()));
+    }
 
-	/**
-	 * 1stカラムであるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isFirstColumn() {
-		switch (this) {
-		case SPOT_01:
-		case SPOT_04:
-		case SPOT_07:
-		case SPOT_10:
-		case SPOT_13:
-		case SPOT_16:
-		case SPOT_19:
-		case SPOT_22:
-		case SPOT_25:
-		case SPOT_28:
-		case SPOT_31:
-		case SPOT_34:
-			return true;
-		default:
-			return false;
-		}
-	}
+    private static Spot getRandomSpotWithFilter(List<Spot> spots, Predicate<Spot> filter) {
+        List<Spot> filteredSpots = spots.stream().filter(filter).collect(Collectors.toList());
+        return getRandomSpotFromList(filteredSpots);
+    }
 
-	/**
-	 * 2ndカラムであるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isSecondColumn() {
-		switch (this) {
-		case SPOT_02:
-		case SPOT_05:
-		case SPOT_08:
-		case SPOT_11:
-		case SPOT_14:
-		case SPOT_17:
-		case SPOT_20:
-		case SPOT_23:
-		case SPOT_26:
-		case SPOT_29:
-		case SPOT_32:
-		case SPOT_35:
-			return true;
-		default:
-			return false;
-		}
-	}
+    private static Spot getRandomSpotFromIntersection(List<Spot> source, Set<Spot> subset) {
+        List<Spot> intersection = source.stream().filter(subset::contains).collect(Collectors.toList());
+        return getRandomSpotFromList(intersection);
+    }
 
-	/**
-	 * 3rdカラムであるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean isThirdColumn() {
-		switch (this) {
-		case SPOT_03:
-		case SPOT_06:
-		case SPOT_09:
-		case SPOT_12:
-		case SPOT_15:
-		case SPOT_18:
-		case SPOT_21:
-		case SPOT_24:
-		case SPOT_27:
-		case SPOT_30:
-		case SPOT_33:
-		case SPOT_36:
-			return true;
-		default:
-			return false;
-		}
-	}
+    public boolean isRed() {
+        return color == SpotColor.RED;
+    }
 
-	/**
-	 * 1to18であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean is1To18() {
-		return 1 <= getNumber() && getNumber() <= 18;
-	}
+    public boolean isBlack() {
+        return color == SpotColor.BLACK;
+    }
 
-	/**
-	 * 19to36であるかを取得.
-	 *
-	 * @return
-	 */
-	public boolean is19To36() {
-		return 19 <= getNumber() && getNumber() <= 36;
-	}
+    public boolean isGreen() {
+        return color == SpotColor.GREEN;
+    }
 
-	/**
-	 * ルーレットの種類に応じたホイール配置を取得.
-	 *
-	 * @param rouletteType ルーレットの種類
-	 * @return ホイール配置
-	 */
-	public static Spot[] getWheelLayout(RouletteType rouletteType) {
-		switch (rouletteType) {
-		case EUROPEAN_STYLE:
-			return EUROPEAN_WHEEL;
-		case AMERICAN_STYLE:
-			return AMERICAN_WHEEL;
-		case ONE_TO_36:
-			return ONE_TO_36_WHEEL;
-		default:
-			throw new IllegalArgumentException("Unsupported roulette type: " + rouletteType);
-		}
-	}
+    public boolean isEven() {
+        return number > 0 && number % 2 == 0;
+    }
 
-	/**
-	 * ホイール上での位置を取得.
-	 *
-	 * @param rouletteType ルーレットの種類
-	 * @return ホイール上での位置（見つからない場合は-1）
-	 */
-	public int getWheelPosition(RouletteType rouletteType) {
-		Spot[] wheelLayout = getWheelLayout(rouletteType);
-		for (int i = 0; i < wheelLayout.length; i++) {
-			if (wheelLayout[i] == this) {
-				return i;
-			}
-		}
-		return -1;
-	}
+    public boolean isOdd() {
+        return number > 0 && number % 2 != 0;
+    }
 
-	/**
-	 * 前回の出目との、盤上での物理的な距離を取得.
-	 *
-	 * @param otherSpot 比較対象の出目
-	 * @param rouletteType ルーレットの種類
-	 * @return 物理的な距離（ホイール上での最短距離）
-	 */
-	public int getPhysicalDistance(Spot otherSpot, RouletteType rouletteType) {
-		if (otherSpot == null) {
-			throw new IllegalArgumentException("otherSpot cannot be null");
-		}
+    public boolean isFirstDozen() {
+        return number >= 1 && number <= 12;
+    }
 
-		int thisPosition = this.getWheelPosition(rouletteType);
-		int otherPosition = otherSpot.getWheelPosition(rouletteType);
+    public boolean isSecondDozen() {
+        return number >= 13 && number <= 24;
+    }
 
-		if (thisPosition == -1 || otherPosition == -1) {
-			throw new IllegalArgumentException("One or both spots are not available in the specified roulette type");
-		}
+    public boolean isThirdDozen() {
+        return number >= 25 && number <= 36;
+    }
 
-		Spot[] wheelLayout = getWheelLayout(rouletteType);
-		int wheelSize = wheelLayout.length;
+    public boolean isFirstColumn() {
+        return number > 0 && number % 3 == 1;
+    }
 
-		// 円周上での最短距離を計算
-		int clockwiseDistance = Math.abs(thisPosition - otherPosition);
-		int counterClockwiseDistance = wheelSize - clockwiseDistance;
+    public boolean isSecondColumn() {
+        return number > 0 && number % 3 == 2;
+    }
 
-		return Math.min(clockwiseDistance, counterClockwiseDistance);
-	}
+    public boolean isThirdColumn() {
+        return number > 0 && number % 3 == 0;
+    }
+
+    public boolean is1To18() {
+        return number >= 1 && number <= 18;
+    }
+
+    public boolean is19To36() {
+        return number >= 19 && number <= 36;
+    }
+
+    public int getWheelPosition(RouletteType rouletteType) {
+        return WHEEL_POSITIONS_CACHE.getOrDefault(rouletteType, Collections.emptyMap()).getOrDefault(this, -1);
+    }
+
+    public int getPhysicalDistance(Spot otherSpot, RouletteType rouletteType) {
+        Objects.requireNonNull(otherSpot, "otherSpot не может быть null");
+        int thisPos = getWheelPosition(rouletteType);
+        int otherPos = otherSpot.getWheelPosition(rouletteType);
+
+        if (thisPos == -1 || otherPos == -1) {
+            throw new IllegalArgumentException("Одно или оба поля недоступны в указанном типе рулетки.");
+        }
+
+        int wheelSize = WHEEL_LAYOUTS.get(rouletteType).length;
+        int diff = Math.abs(thisPos - otherPos);
+
+        return Math.min(diff, wheelSize - diff);
+    }
+
+    public boolean isFirstDozenOrZeroAndDoubleZero() {
+        return FIRST_DOZEN_OR_ZERO_SPOTS.contains(this);
+    }
 }
