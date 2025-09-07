@@ -31,7 +31,7 @@ public class TenUnitStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "10ユニット法(赤のみ)";
+        return TenUnitStrategy.class.getSimpleName();
     }
 
     @Override

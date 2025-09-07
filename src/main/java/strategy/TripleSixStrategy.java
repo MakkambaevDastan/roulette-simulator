@@ -25,7 +25,7 @@ public class TripleSixStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "666法";
+        return TripleSixStrategy.class.getSimpleName();
     }
 
     @Override

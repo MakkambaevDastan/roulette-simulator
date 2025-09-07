@@ -19,7 +19,7 @@ public class MartingaleStrategy4 extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "マーチンゲール法(1st・2ndダズンのみ)";
+        return MartingaleStrategy4.class.getSimpleName();
     }
 
     @Override

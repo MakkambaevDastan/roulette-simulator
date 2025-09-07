@@ -52,7 +52,7 @@ public class MartingaleStrategy5 extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "マーチンゲール法(0、00、1以外)";
+        return MartingaleStrategy5.class.getSimpleName();
     }
 
     @Override

@@ -17,7 +17,7 @@ public class GrandMartingaleStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "グランマーチンゲール法(赤のみ)";
+        return GrandMartingaleStrategy.class.getSimpleName();
     }
 
     @Override

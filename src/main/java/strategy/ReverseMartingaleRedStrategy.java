@@ -17,7 +17,7 @@ public class ReverseMartingaleRedStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "逆マーチンゲール法(赤のみ)";
+        return ReverseMartingaleRedStrategy.class.getSimpleName();
     }
 
     @Override

@@ -15,7 +15,7 @@ public class SevenKaimeStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "7回目の法則(赤のみ)";
+        return SevenKaimeStrategy.class.getSimpleName();
     }
 
     @Override

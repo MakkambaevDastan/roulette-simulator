@@ -19,7 +19,7 @@ public class BarnetStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "バーネット法(赤のみ)";
+        return BarnetStrategy.class.getSimpleName();
     }
 
     @Override

@@ -23,7 +23,7 @@ public class StraightUpStrategy3 extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "ストレート複数賭け2";
+        return StraightUpStrategy3.class.getSimpleName();
     }
 
 

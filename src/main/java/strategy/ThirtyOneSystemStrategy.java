@@ -20,7 +20,7 @@ public class ThirtyOneSystemStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "31システム(赤のみ)";
+        return ThirtyOneSystemStrategy.class.getSimpleName();
     }
 
     @Override

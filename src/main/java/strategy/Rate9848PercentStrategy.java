@@ -8,15 +8,15 @@ import model.Bet;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Rate_98_48_PercentStrategy extends BaseStrategy {
+public class Rate9848PercentStrategy extends BaseStrategy {
 
-    public Rate_98_48_PercentStrategy(Context context) {
+    public Rate9848PercentStrategy(Context context) {
         super(context);
     }
 
     @Override
     public String getName() {
-        return "98.48パーセント法";
+        return Rate9848PercentStrategy.class.getSimpleName();
     }
 
     @Override

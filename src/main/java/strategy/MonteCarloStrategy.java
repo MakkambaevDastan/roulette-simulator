@@ -20,7 +20,7 @@ public class MonteCarloStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "モンテカルロ法(1stダズンのみ)";
+        return MonteCarloStrategy.class.getSimpleName();
     }
 
     @Override

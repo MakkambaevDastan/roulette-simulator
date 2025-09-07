@@ -21,7 +21,7 @@ public class CocomoStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "ココモ法(1stダズンのみ)";
+        return CocomoStrategy.class.getSimpleName();
     }
 
     @Override

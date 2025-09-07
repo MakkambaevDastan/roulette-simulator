@@ -25,7 +25,7 @@ public class MartingaleStrategy3 extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "マーチンゲール法(予測器を使用)";
+        return MartingaleStrategy3.class.getSimpleName();
     }
 
     @Override

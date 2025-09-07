@@ -19,7 +19,7 @@ public class GoodmanStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "グッドマン法(赤のみ)";
+        return GoodmanStrategy.class.getSimpleName();
     }
 
     @Override

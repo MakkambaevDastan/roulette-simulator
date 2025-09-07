@@ -17,7 +17,7 @@ public class TenPercentStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "10%法(赤のみ)";
+        return TenPercentStrategy.class.getSimpleName();
     }
 
     @Override

@@ -15,7 +15,7 @@ public class MansuriansStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "マンシュリアン法";
+        return MansuriansStrategy.class.getSimpleName();
     }
 
     @Override

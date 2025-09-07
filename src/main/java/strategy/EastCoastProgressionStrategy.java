@@ -17,7 +17,7 @@ public class EastCoastProgressionStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "イーストコーストプログレッション(赤のみ)";
+        return EastCoastProgressionStrategy.class.getSimpleName();
     }
 
     @Override

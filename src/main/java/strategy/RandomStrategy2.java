@@ -19,7 +19,7 @@ public class RandomStrategy2 extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "ランダム2";
+        return RandomStrategy2.class.getSimpleName();
     }
 
     @Override

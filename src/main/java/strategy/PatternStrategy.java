@@ -28,7 +28,7 @@ public class PatternStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "パターン分析戦略(予測器を使用)";
+        return PatternStrategy.class.getSimpleName();
     }
 
     @Override

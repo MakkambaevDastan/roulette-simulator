@@ -2,14 +2,11 @@ package strategy;
 
 import application.Context;
 import model.Bet;
-import model.BetTypePrediction;
 import predictor.BasePredictor;
 import predictor.MarkovPredictor2;
 import utils.PredictorHelper;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class MultiBetStrategy extends BaseStrategy {
 
@@ -21,7 +18,7 @@ public class MultiBetStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "複数賭け(予測器を使用)";
+        return MultiBetStrategy.class.getSimpleName();
     }
 
     @Override

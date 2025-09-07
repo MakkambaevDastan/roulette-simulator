@@ -21,7 +21,7 @@ public class TwoInOneStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "2in1法(赤のみ)";
+        return TwoInOneStrategy.class.getSimpleName();
     }
 
     @Override

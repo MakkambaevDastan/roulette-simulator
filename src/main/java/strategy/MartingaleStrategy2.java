@@ -18,7 +18,7 @@ public class MartingaleStrategy2 extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "マーチンゲール法(赤・黒のうち確率の高い方)";
+        return MartingaleStrategy2.class.getSimpleName();
     }
 
     @Override

@@ -20,7 +20,7 @@ public class DalembertStrategy extends BaseStrategy {
 
     @Override
     public String getName() {
-        return "ダランベール法(赤のみ)";
+        return DalembertStrategy.class.getSimpleName();
     }
 
     @Override
